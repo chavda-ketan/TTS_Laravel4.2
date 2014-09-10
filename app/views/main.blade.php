@@ -12,6 +12,8 @@
 
     <!-- Bootstrap -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="/css/datepicker3.css" rel="stylesheet">
     <link href="/css/plugins/metisMenu/metisMenu.min.css" rel="stylesheet">
     <link href="/css/plugins/timeline.css" rel="stylesheet">
     <link href="/css/sb-admin-2.css" rel="stylesheet">
@@ -28,21 +30,27 @@
 
 <body>
     <!-- Notifications -->
-    @include('notifications')
+    <!-- include('notifications') -->
     <!-- ./ notifications -->
 
-    <!-- Content -->
-    @yield('content')
-    <!-- ./ content -->
+    <div class="container">
+
+        <!-- Content -->
+        @yield('content')
+        <!-- ./ content -->
+
+    </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
 
+    <script src="/js/bootstrap-datepicker.js"></script>
+
     <script src="/js/plugins/metisMenu/metisMenu.min.js"></script>
 
     <script src="/js/plugins/morris/raphael.min.js"></script>
-    <script src="/js/plugins/morris/morris.min.js"></script>
-    <script src="/js/plugins/morris/morris-data.js"></script>
+    <!-- <script src="/js/plugins/morris/morris.min.js"></script>
+    <script src="/js/plugins/morris/morris-data.js"></script> -->
 
     <script src="/js/sb-admin-2.js"></script>
 

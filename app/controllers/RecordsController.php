@@ -44,7 +44,9 @@ class RecordsController extends BaseController {
         $outputString .= "Toronto repeat customers - $torontoRepeatCount - %$torontoPercentage repeats <br>";
         $outputString .= '</pre>';
 
-        return $outputString;
+        $data['result'] = $outputString;
+
+        return View::make('reports.repeatcustomers', $data);
     }
 
     protected function getTotalCustomerSForMonth($month, $year)
