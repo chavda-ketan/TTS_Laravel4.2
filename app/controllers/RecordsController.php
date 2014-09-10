@@ -22,7 +22,7 @@ class RecordsController extends BaseController {
         $m = Input::get('m');
         $y = Input::get('y');
 
-        $month = $m ? $m : date('m');
+        $month = $m ? $m : date('F');
         $year = $y ? $y : date('Y');
 
         $total = $this->getTotalCustomersForMonth($month, $year);
@@ -47,7 +47,7 @@ class RecordsController extends BaseController {
         return $outputString;
     }
 
-    protected function getTotalCustomersForMonth($month, $year)
+    protected function getTotalCustomerSForMonth($month, $year)
     {
         $queryFirstDay = date('Ymd', strtotime("first day of $month $year"));
         $queryLastDay = date('Ymd', strtotime("last day of $month $year"));
@@ -56,8 +56,8 @@ class RecordsController extends BaseController {
                 WHERE CustomerID IN 
                 (
                     SELECT CustomerID FROM [Order]
-                    WHERE Time >= '20140901'
-                    AND Time < $queryLastDay
+                    WHERE Time >= '$queryFirstDay'
+                    AND Time < '$queryLastDay'
                 )
                 AND Closed = 1
                 AND ID IN
@@ -68,6 +68,8 @@ class RecordsController extends BaseController {
                 (
                     SELECT OrderEntryID FROM OrderRework
                 )
+                AND Time < '$queryLastDay'
+
                 ORDER BY CustomerID";
 
 
@@ -90,6 +92,9 @@ class RecordsController extends BaseController {
 
     protected function getRepeatCustomersForMonth($month, $year)
     {
+        $queryFirstDay = date('Ymd', strtotime("first day of $month $year"));
+        $queryLastDay = date('Ymd', strtotime("last day of $month $year"));
+
         // $query = "SELECT CustomerID, Time, (SELECT COUNT(DISTINCT CustomerID)) FROM [Order] 
         //         WHERE CustomerID IN
         //         (
@@ -113,8 +118,8 @@ class RecordsController extends BaseController {
                     WHERE CustomerID IN 
                     (
                         SELECT CustomerID FROM [Order]
-                        WHERE Time >= '20140901'
-                        AND Time < GETDATE()
+                        WHERE Time >= '$queryFirstDay'
+                        AND Time < '$queryLastDay'
                     )
                     GROUP BY CustomerID
                     HAVING ( COUNT(CustomerID) > 1 )
@@ -128,6 +133,7 @@ class RecordsController extends BaseController {
                 (
                     SELECT OrderEntryID FROM OrderRework
                 )
+                AND Time < '$queryLastDay'
                 ORDER BY CustomerID";
 
 
