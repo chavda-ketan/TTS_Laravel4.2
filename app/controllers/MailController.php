@@ -37,6 +37,8 @@ class MailController extends BaseController {
 
 				print($serviceRendered);	
 				print('<br>');
+
+				$this->sendThankYouEmail($customer->FirstName, $customer->EmailAddress, $serviceRendered, $customer->Location, $customer->OrderID);
 			}
 
 		}
