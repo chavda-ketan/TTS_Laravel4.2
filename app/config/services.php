@@ -15,7 +15,8 @@ return array(
 	*/
 
 	'mailgun' => array(
-		'domain' => 'sandbox0e0525cb421e44b0b8b1463142f25616.mailgun.org',
+		'domain' => 'mg.taimalabs.com',
+		// 'domain' => 'sandbox0e0525cb421e44b0b8b1463142f25616.mailgun.org',
 		'secret' => 'key-932og69uu03lcchrjbno1c4trgxvyit8',
 	),
 

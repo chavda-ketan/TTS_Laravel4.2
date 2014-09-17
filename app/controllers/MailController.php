@@ -16,7 +16,8 @@ class MailController extends BaseController {
 
 	public function testEmail()
 	{
-		$this->sendThankYouEmail('Jason','connectedideas@hotmail.com','iPhone','m','4324');
+		// $this->sendThankYouEmail('Aubrey','acottle@taimalabs.com','iPhone','m',rand(99999,999999));
+		$this->sendThankYouEmail('Jason','connectedideas@hotmail.com','iPhone','m',rand(99999,999999));
 		return 'Sent';
 	}
 
@@ -26,19 +27,37 @@ class MailController extends BaseController {
 		$serviceList = $this->staticServiceList();
 		$customerList = $this->loadCustomersToThank();
 
-		foreach ($customerList as $customer) {
-			if (isset($serviceList[$customer->ItemID])) { 
-				$serviceRendered = $serviceList[$customer->ItemID];
+		foreach ($customerList as $customer) 
+		{
+			if (isset($serviceList[$customer->ItemID])) 
+			{ 
 
-				print($customer->EmailAddress.' - ');
-				print($customer->FirstName.' - ');
-				print($customer->OrderID.' - ');
-				print($customer->Location.' - ');
+				/* Validate email address */
+				$validator = Validator::make(
+				    array('email' => $customer->EmailAddress),
+				    array('email' => 'required|email')
+				);
+				
+				if ($validator->passes())
+				{
+					/* Check if the applicable workorder already had an email sent, skip if so */
+					$select = DB::connection('mysql-godaddy')->table('thank_you_email')->where('wo_id', '=', $customer->OrderID)->first();
 
-				print($serviceRendered);	
-				print('<br>');
+					if (is_null($select)) 
+					{
+						$serviceRendered = $serviceList[$customer->ItemID];
 
-				$this->sendThankYouEmail($customer->FirstName, $customer->EmailAddress, $serviceRendered, $customer->Location, $customer->OrderID);
+						print($customer->EmailAddress.' - ');
+						print($customer->FirstName.' - ');
+						print($customer->OrderID.' - ');
+						print($customer->Location.' - ');
+
+						print($serviceRendered);	
+						print('<br>');
+
+						$this->sendThankYouEmail($customer->FirstName, $customer->EmailAddress, $serviceRendered, $customer->Location, $customer->OrderID);
+					}
+				}
 			}
 
 		}
@@ -47,36 +66,47 @@ class MailController extends BaseController {
 	/* Send the email template */
 	private function sendThankYouEmail($name, $email, $service, $location, $wo_id)
 	{
-	    $query = "INSERT INTO thank_you_email SET wo_id='$wo_id', s='$location', sent_date=CURDATE() ON DUPLICATE KEY UPDATE wo_id='$wo_id'";
-        $insert = DB::connection('mysql-godaddy')->insert($query);
+		/* Check if the applicable workorder already had an email sent, skip if so */
+		// $query = "SELECT * FROM thank_you_email WHERE wo_id = '$wo_id'";
+		$select = DB::connection('mysql-godaddy')->table('thank_you_email')->where('wo_id', '=', $wo_id)->first();
 
-		// Recipient data
-		$user = array(
-			'email'=>$email,
-			'name'=>$name
-		);
-
-		// the data that will be passed into the mail view blade template
-		$data = array(
-			'name'	=> $user['name'],
-			'service' => $service,
-			'location' => $location,
-			'wo_id' => $wo_id
-		);
-
-		// Queue up the mail so things don't hang. Yay for Redis
-		Mail::queue('emails.thankyou', $data, function($message) use ($user)
+		if (is_null($select)) 
 		{
-			$message->from('service@techknowspace.com', 'TechKnow Space');
-			$message->to($user['email'], $user['name'])->subject('Thank You!');
-		});
+
+		    $query = "INSERT INTO thank_you_email SET wo_id='$wo_id', s='$location', sent_date=NOW()";
+	        $insert = DB::connection('mysql-godaddy')->insert($query);
+
+			// Recipient data
+			$user = array(
+				'email'=>$email,
+				'name'=>$name
+			);
+
+			// the data that will be passed into the mail view blade template
+			$data = array(
+				'name'	=> $user['name'],
+				'service' => $service,
+				'location' => $location,
+				'wo_id' => $wo_id
+			);
+
+			// Queue up the mail so things don't hang. Yay for Redis
+			Mail::queue('emails.thankyou', $data, function($message) use ($user)
+			{
+				$message->from('service@techknowspace.com', 'TechKnow Space');
+				$message->to($user['email'], $user['name'])->subject('Thank You!');
+			});
+
+		}
 	}
 
 	/* Pull yesterday's customers from Toronto/SquareOne dbs */
 	private function loadCustomersToThank()
 	{
+		// $date = date("Y-m-d", strtotime("-150 days"));
 		$date = date("Y-m-d", strtotime("yesterday"));
 		$date .= ' 00:00:00';
+		// $date2 = date("Y-m-d", strtotime("yesterday"));
 		$date2 = date("Y-m-d", strtotime("+2"));
 		$date2 .= ' 00:00:00';
 
@@ -84,11 +114,12 @@ class MailController extends BaseController {
             Customer.EmailAddress AS EmailAddress FROM OrderEntry, \"Order\", 
             Customer WHERE \"Order\".Closed=1 AND \"Order\".Total NOT IN ('28.25','45.20') 
             AND \"Order\".Total>0 AND Customer.ID=\"Order\".CustomerID 
-            AND OrderEntry.OrderID=\"Order\".ID AND OrderEntry.LastUpdated > '$date' 
-            AND OrderEntry.LastUpdated < '$date2' AND OrderEntry.\"Comment\" NOT LIKE '%NNN%'
+            AND OrderEntry.OrderID=\"Order\".ID AND OrderEntry.Price > 0 AND OrderEntry.LastUpdated > '$date' 
+            AND OrderEntry.LastUpdated < '$date2' AND OrderEntry.\"Comment\" LIKE '%YYY%'
             AND DATALENGTH(Customer.EmailAddress) > 0 
             ORDER BY OrderEntry.ID DESC";
 
+        // 11883
         $users = DB::connection('mssql-squareone')->select($sql);
         $users2 = DB::connection('mssql-toronto')->select($sql);
 
