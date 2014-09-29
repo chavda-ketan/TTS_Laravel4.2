@@ -62,6 +62,7 @@ class RecordsController extends BaseController {
 
         $total = $this->getTotalCustomersForMonth($month, $year);
         $repeats = $this->getRepeatCustomersForMonth($month, $year);
+        $referrals = $this->getReferralCustomersForMonth($month, $year);
         
         $torontoTotalCount = count($total['t']);
         $mississaugaTotalCount = count($total['m']);
@@ -69,20 +70,44 @@ class RecordsController extends BaseController {
         $torontoRepeatCount = count($repeats['t']);
         $mississaugaRepeatCount = count($repeats['m']);
 
+        $torontoReferralCount = count($referrals['t']);
+        $mississaugaReferralCount = count($referrals['m']);
+
         $torontoPercentage = $this->percentage($torontoRepeatCount, $torontoTotalCount, 2);
         $mississaugaPercentage = $this->percentage($mississaugaRepeatCount, $mississaugaTotalCount, 2);
 
+        $torontoReferralPercentage = $this->percentage($torontoReferralCount, $torontoTotalCount, 2);
+        $mississaugaReferralPercentage = $this->percentage($mississaugaReferralCount, $mississaugaTotalCount, 2);
+
+        # COMBINED
+        $combinedTotalCount = $torontoTotalCount + $mississaugaTotalCount;
+        $combinedRepeatCount = $torontoRepeatCount + $mississaugaRepeatCount;
+        $combinedReferralCount = $torontoReferralCount + $mississaugaReferralCount;
+
+        $combinedPercentage = $this->percentage($combinedRepeatCount, $combinedTotalCount, 2);
+        $combinedReferralPercentage = $this->percentage($combinedReferralCount, $combinedTotalCount, 2);
+
         $outputString = '<pre>';
+        $outputString .= "$month $year<br><br>";
+
         $outputString .= "SquareOne total customers - $mississaugaTotalCount <br>";
-        $outputString .= "SquareOne repeat customers - $mississaugaRepeatCount - $mississaugaPercentage% repeats<br><br>";
+        $outputString .= "SquareOne repeat customers - $mississaugaRepeatCount - $mississaugaPercentage% repeats<br>";
+        $outputString .= "SquareOne referral customers - $mississaugaReferralCount - $mississaugaReferralPercentage% referrals<br><br>";
+
         $outputString .= "Toronto total customers - $torontoTotalCount <br>";
         $outputString .= "Toronto repeat customers - $torontoRepeatCount - $torontoPercentage% repeats <br>";
+        $outputString .= "Toronto referral customers - $torontoReferralCount - $torontoReferralPercentage% referrals <br><br>";
+
+        $outputString .= "Total customers - $combinedTotalCount <br>";
+        $outputString .= "Repeat customers - $combinedRepeatCount - $combinedPercentage% repeats <br>";
+        $outputString .= "Referral customers - $combinedReferralCount - $combinedReferralPercentage% referrals";
+
         $outputString .= '</pre>';
 
         $data['showpicker'] = 1;
         $data['daterange'] = '';
         $data['result'] = $outputString;
-                $data['graphdata'] = '';
+        $data['graphdata'] = '';
 
 
         return View::make('reports.repeatcustomers', $data);
@@ -113,6 +138,20 @@ class RecordsController extends BaseController {
         $queryLastDay = date('Ymd', strtotime("last day of $month $year"));
 
         $queryResults = $this->repeatCustomerQueryRange($queryFirstDay, $queryLastDay);
+
+        $return['m'] = $queryResults[0];
+        $return['t'] = $queryResults[1];
+
+        return $return;
+    }
+
+    /* Returns a full month of customer referrals */
+    protected function getReferralCustomersForMonth($month, $year)
+    {
+        $queryFirstDay = date('Ymd', strtotime("first day of $month $year"));
+        $queryLastDay = date('Ymd', strtotime("last day of $month $year"));
+
+        $queryResults = $this->referralCustomerQueryRange($queryFirstDay, $queryLastDay);
 
         $return['m'] = $queryResults[0];
         $return['t'] = $queryResults[1];
@@ -170,6 +209,45 @@ class RecordsController extends BaseController {
                 AND ID IN
                 (
                     SELECT OrderHistory.OrderID FROM OrderHistory
+                )
+                AND ID NOT IN
+                (
+                    SELECT OrderEntryID FROM OrderRework
+                )
+                AND Time <= DATEADD(DAY, DATEDIFF(DAY, 0, '$endDate'), -1)
+                ORDER BY CustomerID";
+
+        $results[0] = DB::connection('mssql-squareone')->select($query);
+        $results[1] = DB::connection('mssql-toronto')->select($query);
+
+        $results = $this->addLocation($results);
+
+        return $results;
+    }
+
+    protected function referralCustomerQueryRange($startDate, $endDate)
+    {
+        $query = "SELECT DISTINCT CustomerID FROM [Order] 
+                WHERE CustomerID IN 
+                (
+                    SELECT CustomerID FROM [Order]
+                    WHERE CustomerID IN 
+                    (
+                        SELECT CustomerID FROM [Order]
+                        WHERE Time >= '$startDate'
+                        AND Time <= '$endDate'
+                    )
+                    GROUP BY CustomerID
+                    -- HAVING ( COUNT(CustomerID) > 1 )
+                )
+                AND Closed = 1
+                AND ID IN
+                (
+                    SELECT OrderHistory.OrderID FROM OrderHistory
+                )
+                AND ID IN
+                (
+                    SELECT OrderID From OrderEntry WHERE Comment LIKE '%CREF%'
                 )
                 AND ID NOT IN
                 (

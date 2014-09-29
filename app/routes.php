@@ -34,3 +34,8 @@ Route::get('mail', 'MailController@index');
 Route::get('mail/dump', 'MailController@dump');
 Route::get('mail/test', 'MailController@testEmail');
 Route::get('mail/run', 'MailController@thankCustomers');
+Route::get('mail/print', 'MailController@listThankedCustomers');
+
+
+/* Send SMS Mail */
+Route::get('sms/send', 'MailController@sendSMSEmail');

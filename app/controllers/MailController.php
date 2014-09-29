@@ -100,13 +100,46 @@ class MailController extends BaseController {
 		}
 	}
 
+	public function listThankedCustomers()
+	{
+		$serviceList = $this->staticServiceList();
+		$customerList = $this->loadCustomersToThank();
+
+		foreach ($customerList as $customer)
+		{
+			if (isset($serviceList[$customer->ItemID])) 
+			{ 
+
+				/* Validate email address */
+				$validator = Validator::make(
+				    array('email' => $customer->EmailAddress),
+				    array('email' => 'required|email')
+				);
+				
+				if ($validator->passes())
+				{
+						$serviceRendered = $serviceList[$customer->ItemID];
+
+						print($customer->EmailAddress.' - ');
+						print($customer->FirstName.' - ');
+						print($customer->OrderID.' - ');
+						print($customer->Location.' - ');
+
+						print($serviceRendered);	
+						print('<br>');
+
+				}
+			}
+		}
+	}
+
 	/* Pull yesterday's customers from Toronto/SquareOne dbs */
 	private function loadCustomersToThank()
 	{
 		// $date = date("Y-m-d", strtotime("-150 days"));
 		$date = date("Y-m-d", strtotime("yesterday"));
 		$date .= ' 00:00:00';
-		// $date2 = date("Y-m-d", strtotime("yesterday"));
+		// $date2 = date("Y-m-d", strtotime("-1 days"));
 		$date2 = date("Y-m-d", strtotime("+2"));
 		$date2 .= ' 00:00:00';
 
@@ -185,4 +218,26 @@ class MailController extends BaseController {
 		return $item;
 	}
 
+	/* SMS mail */
+	public function sendSMSEmail()
+	{
+		$wo = Input::get('wo');
+		$sales = Input::get('s');
+
+		$rounded = round($sales, 2);
+
+		$content = "WO #$wo - $$rounded";
+
+		$data = array(
+			'content' => $content
+		);		
+
+		Mail::send(array('text' => 'emails.sms'), $data, function($message) use ($content)
+		{
+			$message->from('t@t.com', 'TTS');
+			$message->to('6472027359@msg.telus.com', 'Ash')->subject('New WO');
+		});	
+
+		return $content;
+	}
 }

@@ -24,13 +24,13 @@
 	        </div>
 	    @endif
 
-	    <div class='col-sm-12'>
+	    <div class='col-sm-9'>
 	    	<div id='graph'>
 	    		
 	    	</div>
 	    </div>
 
-        <div class='col-sm-12'>
+        <div class='col-sm-9'>
         	{{ $daterange }}
 
 			{{ $result }}
