@@ -74,14 +74,12 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
-
     <script src="/js/bootstrap-datepicker.js"></script>
 
     <script src="/js/plugins/metisMenu/metisMenu.min.js"></script>
-
     <script src="/js/plugins/morris/raphael.min.js"></script>
-    <!-- <script src="/js/plugins/morris/morris.min.js"></script>
-    <script src="/js/plugins/morris/morris-data.js"></script> -->
+
+    <script type="text/javascript" src="/js/plugins/flot/jquery.flot.js"></script>
 
     <script src="/js/sb-admin-2.js"></script>
 

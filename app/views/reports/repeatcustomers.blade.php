@@ -4,10 +4,14 @@
 @stop
 
 @section('content')
-    <div class="row">
+    <div class="row" style="margin-top:20px;">
 
-	    @if(isset($showpicker))
-	        <div class='col-sm-6'>
+        <div class='col-sm-6'>
+			{{ $result }}
+		</div>
+
+		@if(isset($showpicker))
+	        <div class='col-sm-4'>
 		        <form role="form" action="repeats" id="datepicker-form">
 		            <div class="form-group">
 		                <div class='input-group date' id='datepicker'>
@@ -24,24 +28,24 @@
 	        </div>
 	    @endif
 
-	    <div class='col-sm-9'>
-	    	<div id='graph'>
-	    		
+	    <div class='col-sm-10'>
+	    	<div id='graph' style="width: 100%; height: 500px;">
+
 	    	</div>
 	    </div>
 
-        <div class='col-sm-9'>
-        	{{ $daterange }}
-
-			{{ $result }}
-		</div>
 	</div>
 
 	<script type="text/javascript">
+		var dates = [ {{ $dates }} ];
+		var totals = [ {{ $total }} ];
+		var repeats = [ {{ $repeat }} ];
+		var referrals = [ {{ $referral }} ];
 	</script>
 @stop
 
 @section('scripts')
+
 
 <script type="text/javascript">
     $(function () {
@@ -59,12 +63,10 @@
 		    $('#date-m').val(split[0]);
 		    $('#date-y').val(split[1]);
 		    $('#date').val('');
-		    // alert('Handler for .submit() called.');
 		});
 
-		var data = [ {{ $graphdata }} ];
 
-		$.plot($("#graph"), [ data ], {
+		$.plot("#graph", [ dates ], {
 			series: {
 				bars: {
 					show: true,
