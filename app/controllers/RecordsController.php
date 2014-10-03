@@ -6,10 +6,6 @@ class RecordsController extends BaseController {
 		return $queryFirstDay . ' - ' . $queryLastDay;
 	}
 
-	public function repeatCustomersReport() {
-
-	}
-
 /**
 PAGE FUNCTIONS
  */
@@ -21,6 +17,8 @@ PAGE FUNCTIONS
 		$month = $m ? $m : date('F');
 		$year = $y ? $y : date('Y');
 
+		$start = strtotime('today - 30 days');
+
 	}
 
 	/* Display the repeat customers for a given month */
@@ -31,60 +29,79 @@ PAGE FUNCTIONS
 		$month = $m ? $m : date('F');
 		$year = $y ? $y : date('Y');
 
-		$total = $this->getTotalCustomersForMonth($month, $year);
-		$repeats = $this->getRepeatCustomersForMonth($month, $year);
-		$referrals = $this->getReferralCustomersForMonth($month, $year);
+        $data = $this->tallyMonth($month, $year);
 
-		$torontoTotalCount = count($total['t']);
-		$mississaugaTotalCount = count($total['m']);
+        $dates = $this->monthDateRange($month, $year);
 
-		$torontoRepeatCount = count($repeats['t']);
-		$mississaugaRepeatCount = count($repeats['m']);
+        $dailyTotals = $this->iterateOverDateRange($dates);
 
-		$torontoReferralCount = count($referrals['t']);
-		$mississaugaReferralCount = count($referrals['m']);
 
-		$torontoPercentage = $this->percentage($torontoRepeatCount, $torontoTotalCount, 2);
-		$mississaugaPercentage = $this->percentage($mississaugaRepeatCount, $mississaugaTotalCount, 2);
+        $data['dates'] = '';
+        $data['total'] = '';
+        $data['repeat'] = '';
+        $data['referral'] = '';
+        $data['chartdata'] = '';
 
-		$torontoReferralPercentage = $this->percentage($torontoReferralCount, $torontoTotalCount, 2);
-		$mississaugaReferralPercentage = $this->percentage($mississaugaReferralCount, $mississaugaTotalCount, 2);
 
-		$combinedTotalCount = $torontoTotalCount + $mississaugaTotalCount;
-		$combinedRepeatCount = $torontoRepeatCount + $mississaugaRepeatCount;
-		$combinedReferralCount = $torontoReferralCount + $mississaugaReferralCount;
+        foreach ($dailyTotals as $day => $metrics) {
+            $total = count($metrics['total']['t']) + count($metrics['total']['m']);
 
-		$combinedPercentage = $this->percentage($combinedRepeatCount, $combinedTotalCount, 2);
-		$combinedReferralPercentage = $this->percentage($combinedReferralCount, $combinedTotalCount, 2);
+            // $data['dates'] .= "'$day', ";
+            // $data['total'] .= "'$total', ";
 
-		$outputString = '<pre>';
-		$outputString .= "$month $year<br><br>";
+            $data['chartdata'] .= "['$day', '$total'], ";
+        }
 
-		$outputString .= "SquareOne total customers - $mississaugaTotalCount <br>";
-		$outputString .= "SquareOne repeat customers - $mississaugaRepeatCount - $mississaugaPercentage% repeats<br>";
-		$outputString .= "SquareOne referral customers - $mississaugaReferralCount - $mississaugaReferralPercentage% referrals<br><br>";
 
-		$outputString .= "Toronto total customers - $torontoTotalCount <br>";
-		$outputString .= "Toronto repeat customers - $torontoRepeatCount - $torontoPercentage% repeats <br>";
-		$outputString .= "Toronto referral customers - $torontoReferralCount - $torontoReferralPercentage% referrals <br><br>";
+        $data['debugme'] = $dailyTotals;
 
-		$outputString .= "Total customers - $combinedTotalCount <br>";
-		$outputString .= "Repeat customers - $combinedRepeatCount - $combinedPercentage% repeats <br>";
-		$outputString .= "Referral customers - $combinedReferralCount - $combinedReferralPercentage% referrals";
+		$data['month'] = $month;
+		$data['year'] = $year;
 
-		$outputString .= '</pre>';
-
-		$data['showpicker'] = 1;
-
-		$data['dates'] = '';
-		$data['total'] = '';
-		$data['repeat'] = '';
-		$data['referral'] = '';
-
-		$data['result'] = $outputString;
+        $data['showpicker'] = 1;
 
 		return View::make('reports.repeatcustomers', $data);
 	}
+
+/**
+ RECORD MATH FUNCTIONS
+ */
+
+private function tallyMonth($month, $year)
+{
+
+    $total = $this->getTotalCustomersForMonth($month, $year);
+    $repeats = $this->getRepeatCustomersForMonth($month, $year);
+    $referrals = $this->getReferralCustomersForMonth($month, $year);
+
+    $data['torontoTotalCount'] = count($total['t']);
+    $data['mississaugaTotalCount'] = count($total['m']);
+
+    $data['torontoRepeatCount'] = count($repeats['t']);
+    $data['mississaugaRepeatCount'] = count($repeats['m']);
+
+    $data['torontoReferralCount'] = count($referrals['t']);
+    $data['mississaugaReferralCount'] = count($referrals['m']);
+
+    $data['torontoPercentage'] = $this->percentage($data['torontoRepeatCount'], $data['torontoTotalCount'], 2);
+    $data['mississaugaPercentage'] = $this->percentage($data['mississaugaRepeatCount'], $data['mississaugaTotalCount'], 2);
+
+    $data['torontoReferralPercentage'] = $this->percentage($data['torontoReferralCount'], $data['torontoTotalCount'], 2);
+    $data['mississaugaReferralPercentage'] = $this->percentage($data['mississaugaReferralCount'], $data['mississaugaTotalCount'], 2);
+
+    $data['combinedTotalCount'] = $data['torontoTotalCount']+$data['mississaugaTotalCount'];
+    $data['combinedRepeatCount'] = $data['torontoRepeatCount']+$data['mississaugaRepeatCount'];
+    $data['combinedReferralCount'] = $data['torontoReferralCount']+$data['mississaugaReferralCount'];
+
+    $data['combinedPercentage'] = $this->percentage($data['combinedRepeatCount'], $data['combinedTotalCount'], 2);
+    $data['combinedReferralPercentage'] = $this->percentage($data['combinedReferralCount'], $data['combinedTotalCount'], 2);
+
+    return $data;
+}
+
+/**
+ DATE RANGE FUNCTIONS
+ */
 
 	protected function iterateOverDateRange($dates) {
 		$begin = new DateTime($dates['first']);
@@ -105,10 +122,6 @@ PAGE FUNCTIONS
 
 		return $rangeOutput;
 	}
-
-/**
-DATE RANGE FUNCTIONS
- */
 
 	/* Input a month and year, get an array with the first and last calendar date in SQL Server format */
 	protected function monthDateRange($month, $year) {

@@ -4,10 +4,32 @@
 @stop
 
 @section('content')
+<style type="text/css">
+	#outputsummary p {
+	}
+</style>
+
+
     <div class="row" style="margin-top:20px;">
 
-        <div class='col-sm-6'>
-			{{ $result }}
+        <div id="outputsummary" class='col-sm-6'>
+        	<div class='well'>
+
+				<p>{{ $month }} {{ $year }}</p>
+
+				<p>SquareOne total customers - {{ $mississaugaTotalCount }}</p>
+				<p>SquareOne repeat customers - {{ $mississaugaRepeatCount }} - {{ $mississaugaPercentage }}% repeats</p>
+				<p>SquareOne referral customers - {{ $mississaugaReferralCount }} - {{ $mississaugaReferralPercentage }}% referrals</p>
+
+				<p>Toronto total customers - {{ $torontoTotalCount }}</p>
+				<p>Toronto repeat customers - {{ $torontoRepeatCount }} - {{ $torontoPercentage }}% repeats</p>
+				<p>Toronto referral customers - {{ $torontoReferralCount }} - {{ $torontoReferralPercentage }}% referrals</p>
+
+				<p>Total customers - {{ $combinedTotalCount }}</p>
+				<p>Repeat customers - {{ $combinedRepeatCount }} - {{ $combinedPercentage }}% repeats</p>
+				<p>Referral customers - {{ $combinedReferralCount }} - {{ $combinedReferralPercentage }}% referrals</p>
+
+			</div>
 		</div>
 
 		@if(isset($showpicker))
@@ -36,11 +58,15 @@
 
 	</div>
 
+	<pre>
+		{{ var_dump($debugme); }}
+
 	<script type="text/javascript">
 		var dates = [ {{ $dates }} ];
 		var totals = [ {{ $total }} ];
 		var repeats = [ {{ $repeat }} ];
 		var referrals = [ {{ $referral }} ];
+		var chartdata = [ {{ $chartdata }} ];
 	</script>
 @stop
 
@@ -66,7 +92,7 @@
 		});
 
 
-		$.plot("#graph", [ dates ], {
+		$.plot("#graph", [ chartdata ], {
 			series: {
 				bars: {
 					show: true,
