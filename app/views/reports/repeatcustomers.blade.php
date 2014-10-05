@@ -8,7 +8,7 @@
 	#outputsummary p {
 	}
 </style>
-
+ 
 
     <div class="row" style="margin-top:20px;">
 
@@ -60,18 +60,19 @@
 
 	<pre>
 		{{ var_dump($debugme); }}
+	</pre>
 
 	<script type="text/javascript">
 		var dates = [ {{ $dates }} ];
-		var totals = [ {{ $total }} ];
-		var repeats = [ {{ $repeat }} ];
-		var referrals = [ {{ $referral }} ];
+		var total = [ {{ $total }} ];
+		var repeat = [ {{ $repeat }} ];
+		var referral = [ {{ $referral }} ];
 		var chartdata = [ {{ $chartdata }} ];
 	</script>
 @stop
 
 @section('scripts')
-
+<script src="http://code.highcharts.com/highcharts.js"></script>
 
 <script type="text/javascript">
     $(function () {
@@ -92,19 +93,60 @@
 		});
 
 
-		$.plot("#graph", [ chartdata ], {
-			series: {
-				bars: {
-					show: true,
-					barWidth: 0.6,
-					align: "center"
-				}
+		// $.plot("#graph", [ chartdata ], {
+		// 	series: {
+		// 		bars: {
+		// 			show: true,
+		// 			barWidth: 0.6,
+		// 			align: "center"
+		// 		}
+		// 	},
+		// 	xaxis: {
+		// 		mode: "categories",
+		// 		tickLength: 0
+		// 	}
+		// });
+
+
+	    $('#graph').highcharts({
+	        chart: {
+	            type: 'line'
+	        },
+	        title: {
+	            text: 'Repeat Customers'
+	        },
+	        xAxis: {
+	            categories: dates
+	        },
+	        yAxis: {
+	            title: {
+	                text: 'Customers'
+	            }
+	        },
+	        plotOptions: {
+	            line: {
+	                dataLabels: {
+	                    enabled: true
+	                },
+	                enableMouseTracking: true
+	            }
+	        },
+	        series: [{
+	            name: 'Total',
+	            data: total
+	        }, {
+	            name: 'Repeat',
+	            data: repeat
+	        }, {
+	            name: 'Referral',
+	            data: referral
+	        }],
+	        credits: {
+      			enabled: false
 			},
-			xaxis: {
-				mode: "categories",
-				tickLength: 0
-			}
-		});
+			exporting: { enabled: false }
+	    });
+
     });
 </script>
 

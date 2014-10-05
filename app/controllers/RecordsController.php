@@ -45,11 +45,15 @@ PAGE FUNCTIONS
 
         foreach ($dailyTotals as $day => $metrics) {
             $total = count($metrics['total']['t']) + count($metrics['total']['m']);
+            $repeat = count($metrics['repeat']['t']) + count($metrics['repeat']['m']);
+            $referral = count($metrics['referral']['t']) + count($metrics['referral']['m']);
 
-            // $data['dates'] .= "'$day', ";
-            // $data['total'] .= "'$total', ";
+            $data['dates'] .= "'$day', ";
+            $data['total'] .= "'$total', ";
+            $data['repeat'] .= "'$repeat', ";
+            $data['referral'] .= "'$referral', ";
 
-            $data['chartdata'] .= "['$day', '$total'], ";
+            $data['chartdata'] .= "['$day', '$total', '$repeat', '$referral'], ";
         }
 
 
