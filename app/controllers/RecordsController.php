@@ -10,106 +10,84 @@ class RecordsController extends BaseController {
 PAGE FUNCTIONS
  */
 
-	public function newRepeatReport() {
-		$m = Input::get('m');
-		$y = Input::get('y');
-
-		$month = $m ? $m : date('F');
-		$year = $y ? $y : date('Y');
-
-		$start = strtotime('today - 30 days');
-
-	}
-
-	/* Display the repeat customers for a given month */
 	public function showMonthlyRepeat() {
-		$m = Input::get('m');
-		$y = Input::get('y');
+		$start = Input::get('start');
+		$end = Input::get('end');
 
-		$month = $m ? $m : date('F');
-		$year = $y ? $y : date('Y');
+		$data['start'] = $start ? $start : date('Y-m-d', strtotime("30 days ago"));
+		$data['end'] = $end ? $end : date('Y-m-d');
 
-        $data = $this->tallyMonth($month, $year);
+		$dailyTotals = $this->iterateOverDateRange($data);
 
-        $dates = $this->monthDateRange($month, $year);
+		// $data[] = $this->tallyData($dailyTotals);
 
-        $dailyTotals = $this->iterateOverDateRange($dates);
+		$data['dates'] = '';
+		$data['total'] = '';
+		$data['repeat'] = '';
+		$data['referral'] = '';
+		$data['chartdata'] = '';
 
+		foreach ($dailyTotals as $day => $metrics) {
+			$total = count($metrics['total']['t']) + count($metrics['total']['m']);
+			$repeat = count($metrics['repeat']['t']) + count($metrics['repeat']['m']);
+			$referral = count($metrics['referral']['t']) + count($metrics['referral']['m']);
 
-        $data['dates'] = '';
-        $data['total'] = '';
-        $data['repeat'] = '';
-        $data['referral'] = '';
-        $data['chartdata'] = '';
+			$data['dates'] .= "'$day', ";
+			$data['total'] .= "$total, ";
+			$data['repeat'] .= "$repeat, ";
+			$data['referral'] .= "$referral, ";
+		}
 
-
-        foreach ($dailyTotals as $day => $metrics) {
-            $total = count($metrics['total']['t']) + count($metrics['total']['m']);
-            $repeat = count($metrics['repeat']['t']) + count($metrics['repeat']['m']);
-            $referral = count($metrics['referral']['t']) + count($metrics['referral']['m']);
-
-            $data['dates'] .= "'$day', ";
-            $data['total'] .= "'$total', ";
-            $data['repeat'] .= "'$repeat', ";
-            $data['referral'] .= "'$referral', ";
-
-            $data['chartdata'] .= "['$day', '$total', '$repeat', '$referral'], ";
-        }
-
-
-        $data['debugme'] = $dailyTotals;
-
-		$data['month'] = $month;
-		$data['year'] = $year;
-
-        $data['showpicker'] = 1;
+		$data['showpicker'] = 1;
 
 		return View::make('reports.repeatcustomers', $data);
 	}
 
 /**
- RECORD MATH FUNCTIONS
+RECORD MATH FUNCTIONS
  */
 
-private function tallyMonth($month, $year)
-{
+	private function tallyData($data) {
 
-    $total = $this->getTotalCustomersForMonth($month, $year);
-    $repeats = $this->getRepeatCustomersForMonth($month, $year);
-    $referrals = $this->getReferralCustomersForMonth($month, $year);
+		// $total = $this->getTotalCustomersForMonth($month, $year);
+		// $repeats = $this->getRepeatCustomersForMonth($month, $year);
+		// $referrals = $this->getReferralCustomersForMonth($month, $year);
 
-    $data['torontoTotalCount'] = count($total['t']);
-    $data['mississaugaTotalCount'] = count($total['m']);
+		$data['torontoTotalCount'] = count($total['t']);
+		$data['mississaugaTotalCount'] = count($total['m']);
 
-    $data['torontoRepeatCount'] = count($repeats['t']);
-    $data['mississaugaRepeatCount'] = count($repeats['m']);
+		$data['torontoRepeatCount'] = count($repeats['t']);
+		$data['mississaugaRepeatCount'] = count($repeats['m']);
 
-    $data['torontoReferralCount'] = count($referrals['t']);
-    $data['mississaugaReferralCount'] = count($referrals['m']);
+		$data['torontoReferralCount'] = count($referrals['t']);
+		$data['mississaugaReferralCount'] = count($referrals['m']);
 
-    $data['torontoPercentage'] = $this->percentage($data['torontoRepeatCount'], $data['torontoTotalCount'], 2);
-    $data['mississaugaPercentage'] = $this->percentage($data['mississaugaRepeatCount'], $data['mississaugaTotalCount'], 2);
+		$data['torontoPercentage'] = $this->percentage($data['torontoRepeatCount'], $data['torontoTotalCount'], 2);
+		$data['mississaugaPercentage'] = $this->percentage($data['mississaugaRepeatCount'], $data['mississaugaTotalCount'], 2);
 
-    $data['torontoReferralPercentage'] = $this->percentage($data['torontoReferralCount'], $data['torontoTotalCount'], 2);
-    $data['mississaugaReferralPercentage'] = $this->percentage($data['mississaugaReferralCount'], $data['mississaugaTotalCount'], 2);
+		$data['torontoReferralPercentage'] = $this->percentage($data['torontoReferralCount'], $data['torontoTotalCount'], 2);
+		$data['mississaugaReferralPercentage'] = $this->percentage($data['mississaugaReferralCount'], $data['mississaugaTotalCount'], 2);
 
-    $data['combinedTotalCount'] = $data['torontoTotalCount']+$data['mississaugaTotalCount'];
-    $data['combinedRepeatCount'] = $data['torontoRepeatCount']+$data['mississaugaRepeatCount'];
-    $data['combinedReferralCount'] = $data['torontoReferralCount']+$data['mississaugaReferralCount'];
+		$data['combinedTotalCount'] = $data['torontoTotalCount']+$data['mississaugaTotalCount'];
+		$data['combinedRepeatCount'] = $data['torontoRepeatCount']+$data['mississaugaRepeatCount'];
+		$data['combinedReferralCount'] = $data['torontoReferralCount']+$data['mississaugaReferralCount'];
 
-    $data['combinedPercentage'] = $this->percentage($data['combinedRepeatCount'], $data['combinedTotalCount'], 2);
-    $data['combinedReferralPercentage'] = $this->percentage($data['combinedReferralCount'], $data['combinedTotalCount'], 2);
+		$data['combinedPercentage'] = $this->percentage($data['combinedRepeatCount'], $data['combinedTotalCount'], 2);
+		$data['combinedReferralPercentage'] = $this->percentage($data['combinedReferralCount'], $data['combinedTotalCount'], 2);
 
-    return $data;
-}
+		return $data;
+	}
 
 /**
- DATE RANGE FUNCTIONS
+DATE RANGE FUNCTIONS
  */
 
 	protected function iterateOverDateRange($dates) {
-		$begin = new DateTime($dates['first']);
-		$end = new DateTime($dates['last']);
+		$begin = new DateTime($dates['start']);
+		$end = new DateTime($dates['end']);
+
+		/* add one day to fix oddity */
+		$end->add(new DateInterval('P1D'));
 
 		$interval = DateInterval::createFromDateString('1 day');
 		$period = new DatePeriod($begin, $interval, $end);
@@ -134,17 +112,6 @@ private function tallyMonth($month, $year)
 
 		$return['first'] = $firstDay;
 		$return['last'] = $lastDay;
-
-		return $return;
-	}
-
-	/* Previous function but single day */
-	protected function singleDay($day, $year) {
-		$firstDay = date('Y-m-d 00:00:00.000', strtotime("first day of $month $year"));
-		$lastDay = date('Y-m-d 23:59:59.000', strtotime("last day of $month $year"));
-
-		$return['start'] = $dayEnd;
-		$return['end'] = $dayStart;
 
 		return $return;
 	}
@@ -194,12 +161,6 @@ private function tallyMonth($month, $year)
 DATABASE QUERIES
  */
 
-	/**
-	 * Query a date range for all customers in that span
-	 * @param  string $startDate [description]
-	 * @param  string $endDate   [description]
-	 * @return array            [description]
-	 */
 	protected function totalCustomerQueryRange($startDate, $endDate) {
 		$query = "SELECT DISTINCT CustomerID FROM [Order]
                 WHERE CustomerID IN

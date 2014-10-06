@@ -2,13 +2,12 @@
 
 class TwitterController extends BaseController {
 
-	public function index()
-	{
-		$mCoords = '43.589045,-79.644119,5km';
-		$tCoords = '43.652527,-79.381961,5km';
+	public function index() {
+		$mCoords = '43.589045,-79.644119,20km';
+		$tCoords = '43.652527,-79.381961,20km';
 
-		$query['q'] = 'broken phone';
-		$query['geocode'] = '43.652527,-79.381961,5km';
+		$query['q'] = 'broken phone OR laptop';
+		$query['geocode'] = $mCoords;
 
 		$searchResults = Twitter::getSearch($query);
 
@@ -23,7 +22,6 @@ class TwitterController extends BaseController {
 			$tweetDate = $result->created_at;
 
 			$searchResultsString .= "@$userHandle - $userLocation - $tweetDate - $tweetText <br>";
-			// $searchResultsString .= print_r($result);
 		}
 
 		$searchResultsString .= '</pre>';
@@ -31,13 +29,11 @@ class TwitterController extends BaseController {
 		return $searchResultsString;
 	}
 
-	public function doTwitterSearch()
-	{
-		
+	public function doTwitterSearch() {
+
 	}
 
-	public function showLatLongForGeoSearch()
-	{
+	public function showLatLongForGeoSearch() {
 		$torontoGeocode = $this->getGeocodeForLocation('Toronto');
 		$mississaugaGeocode = $this->getGeocodeForLocation('Mississauga');
 
@@ -47,8 +43,7 @@ class TwitterController extends BaseController {
 		return dd($mergedResults);
 	}
 
-	public function getGeocodeForLocation($city)
-	{
+	public function getGeocodeForLocation($city) {
 		$query['query'] = $city;
 		$query['granularity'] = 'city';
 
