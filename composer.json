@@ -6,10 +6,11 @@
 	"require": {
 		"laravel/framework": "4.2.*",
 		"guzzlehttp/guzzle": "~4.0",
-		"indatus/dispatcher": "dev-master",
+		"indatus/dispatcher": "1.*",
 		"thujohn/twitter": "dev-master",
 		"google/apiclient": "1.0.*@beta",
-		"eyecatchup/webmaster-tools-data": "dev-master"
+		"eyecatchup/webmaster-tools-data": "dev-master",
+		"googleads/googleads-php-lib": "dev-master"
 	},
 	"autoload": {
 		"classmap": [

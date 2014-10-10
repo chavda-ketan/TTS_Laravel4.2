@@ -12,12 +12,10 @@
 
     <!-- Bootstrap -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
-
     <link href="/css/datepicker3.css" rel="stylesheet">
     <link href="/css/plugins/metisMenu/metisMenu.min.css" rel="stylesheet">
     <link href="/css/plugins/timeline.css" rel="stylesheet">
     <link href="/css/sb-admin-2.css" rel="stylesheet">
-    <link href="/css/plugins/morris.css" rel="stylesheet">
     <link href="/fonts/font-awesome-4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -43,7 +41,7 @@
                 <a class="navbar-brand" href="index.html">TechKnow Space Internal v2</a>
             </div>
 
-            <div class="navbar-default sidebar" role="navigation">
+<!--             <div class="navbar-default sidebar" role="navigation">
                 <div class="sidebar-nav navbar-collapse">
                     <ul class="nav" id="side-menu">
                         <li>
@@ -53,16 +51,13 @@
                                     <a href="/records/repeats">Repeat Customers</a>
                                 </li>
                             </ul>
-                            <!-- /.nav-second-level -->
                         </li>
                     </ul>
                 </div>
-                <!-- /.sidebar-collapse -->
             </div>
-            <!-- /.navbar-static-side -->
-        </nav>
+ -->        </nav>
 
-    <div id="page-wrapper">
+    <!-- <div id="page-wrapper"> -->
         <div class="container">
 
             <!-- Content -->
@@ -70,16 +65,15 @@
             <!-- ./ content -->
 
         </div>
-    </div>
+    <!-- </div> -->
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
     <script src="/js/bootstrap-datepicker.js"></script>
+    <script src="/js/jquery.tablesorter.min.js"></script>
 
     <script src="/js/plugins/metisMenu/metisMenu.min.js"></script>
     <script src="/js/plugins/morris/raphael.min.js"></script>
-
-    <script type="text/javascript" src="/js/plugins/flot/jquery.flot.js"></script>
 
     <script src="/js/sb-admin-2.js"></script>
 
