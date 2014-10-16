@@ -5,14 +5,14 @@ class RecordsController extends BaseController
 
     public function index()
     {
-        return $queryFirstDay . ' - ' . $queryLastDay;
+        return $this->showRepeatCustomerReport();
     }
 
 /**
 PAGE FUNCTIONS
  */
 
-    public function showMonthlyRepeat()
+    public function showRepeatCustomerReport()
     {
         $start = Input::get('start');
         $end = Input::get('end');
@@ -20,19 +20,26 @@ PAGE FUNCTIONS
         $data['start'] = $start ? $start : date('Y-m-d', strtotime("30 days ago"));
         $data['end'] = $end ? $end : date('Y-m-d');
 
+        $end = new DateTime($data['end']);
+        $today = new DateTime();
+
+        if ($end > $today) {
+            $data['end'] = date('Y-m-d');
+        }
+
         $dailyTotals = $this->iterateOverDateRange($data);
 
-        $data['dates'] = '';
-        $data['total'] = '';
-        $data['repeat'] = '';
-        $data['referral'] = '';
-        $data['revenue'] = '';
-        $data['spend'] = '';
-        $data['chartdata'] = '';
+        /* Instantiate all the things */
+        $data['trends'] = array();
 
-        $absoluteTotal = 0;
+        $data['dates'] = $data['total'] =  $data['repeat'] = $data['referral'] =
+        $data['revenue'] = $data['spend'] = $data['chartdata'] =
+        $data['trends']['search'] = $data['trends']['repeat'] = $data['trends']['referral'] = '';
+
+        $days = $absoluteSearchTotal = $absoluteRepeatTotal = $absoluteReferralTotal = 0;
 
         foreach ($dailyTotals as $day => $metrics) {
+            $days++;
             $total = count($metrics['total']['t']) + count($metrics['total']['m']);
             $repeat = count($metrics['repeat']['t']) + count($metrics['repeat']['m']);
             $referral = count($metrics['referral']['t']) + count($metrics['referral']['m']);
@@ -42,33 +49,78 @@ PAGE FUNCTIONS
             $combinedRevenue = $revenue['t']->Revenue + $revenue['m']->Revenue;
             $dividedRevenue = round($combinedRevenue / $total, 2);
 
-            $total = $total - $repeat - $referral;
+            $search = $total - $repeat - $referral;
 
-            $absoluteTotal = $total + $absoluteTotal;
+            /* Absolute totals */
+            $absoluteSearchTotal = $search + $absoluteSearchTotal;
+            $absoluteRepeatTotal = $repeat + $absoluteRepeatTotal;
+            $absoluteReferralTotal = $referral + $absoluteReferralTotal;
 
             /* Adwords spend */
-			$adwordsCost = $this->getAdwordsCostForDate($day);
-			$adwordsPerCustomer = $adwordsCost / $total; 
+            $adwordsPerCustomer = 0;
+            $adwordsCost = $this->getAdwordsCostForDate($day);
 
-			$adwordsPerCustomer = round($adwordsPerCustomer, 2);
+            if ($adwordsCost) {
+                $adwordsPerCustomer = $adwordsCost / $search;
+                $adwordsPerCustomer = round($adwordsPerCustomer, 2);
+            }
+
+            /* Trending averages */
+            $trendSearch = round($absoluteSearchTotal / $days, 1);
+            $trendRepeat = round($absoluteRepeatTotal / $days, 1);
+            $trendReferral = round($absoluteReferralTotal / $days, 1);
 
             $data['dates'] .= "'$day', ";
-            $data['total'] .= "$total, ";
+            $data['total'] .= "$search, ";
             $data['repeat'] .= "$repeat, ";
             $data['referral'] .= "$referral, ";
             $data['revenue'] .= "$dividedRevenue, ";
             $data['spend'] .= "$adwordsPerCustomer, ";
+
+            $data['trends']['search'] .= "$trendSearch,";
+            $data['trends']['repeat'] .= "$trendRepeat,";
+            $data['trends']['referral'] .= "$trendReferral,";
         }
 
-		$rangeSpend = $this->getAdwordsRangeAverage($data['start'], $data['end']);
+        $data['avg'] = $this->getAverages($absoluteSearchTotal, $absoluteRepeatTotal,
+                                          $absoluteReferralTotal, $days,
+                                          $data['start'], $data['end']);
 
-		$rangeAverageSpend = $rangeSpend / $absoluteTotal;
-		$rangeAverageSpend = round($rangeAverageSpend, 2);
-
-        $data['avg'] = $rangeAverageSpend;
         $data['showpicker'] = 1;
 
         return View::make('reports.repeatcustomers', $data);
+    }
+
+/**
+MATH FUNCTIONS
+ */
+
+    protected function getAverages($absoluteSearchTotal, $absoluteRepeatTotal, $absoluteReferralTotal, $days, $start, $end)
+    {
+        $average = array();
+        $rangeSpend = $this->getAdwordsRangeAverage($start, $end);
+
+        $rangeAverageSpend = $rangeSpend / $absoluteSearchTotal;
+        $averages['adwords'] = round($rangeAverageSpend, 2);
+
+        $averageSearch = $absoluteSearchTotal / $days;
+        $averages['search'] = round($averageSearch, 2);
+
+        $averageRepeat = $absoluteRepeatTotal / $days;
+        $averages['repeat'] = round($averageRepeat, 2);
+
+        $averageReferral = $absoluteReferralTotal / $days;
+        $averages['referral'] = round($averageReferral, 2);
+
+        return $averages;
+    }
+
+
+    protected function getAveragesTrend($absoluteSearchTotal, $absoluteRepeatTotal, $absoluteReferralTotal, $days, $start, $end)
+    {
+
+
+        return $averagesTrend;
     }
 
 /**
@@ -203,6 +255,7 @@ DATABASE QUERIES
                         WHERE Time >= '$startDate'
                         AND Time <= '$endDate'
                     )
+                    AND Time <= '$endDate'
                     GROUP BY CustomerID
                     HAVING ( COUNT(CustomerID) > 1 )
                 )
@@ -261,11 +314,11 @@ DATABASE QUERIES
     {
         $services = '3133, 3134, 3033, 3203, 3197, 3195, 3167, 3168, 3141, 3135, 3173, 3172, 3136, 3201, 3140, 3137, 3200, 7430, 7432, 7752, 7603, 7601, 7599, 1111';
         $query = "SELECT sum(TransactionEntry.Price * Quantity + TransactionEntry.SalesTax) AS Revenue
-        		  FROM [Transaction], TransactionEntry
-				  WHERE TransactionEntry.TransactionNumber = [Transaction].TransactionNumber
-				  AND [Transaction].Time >= '$date 00:00:00'
-				  AND [Transaction].Time < '$date 23:59:59'
-				  AND TransactionEntry.itemid IN ($services)";
+                  FROM [Transaction], TransactionEntry
+                  WHERE TransactionEntry.TransactionNumber = [Transaction].TransactionNumber
+                  AND [Transaction].Time >= '$date 00:00:00'
+                  AND [Transaction].Time < '$date 23:59:59'
+                  AND TransactionEntry.itemid IN ($services)";
 
         $results['m'] = DB::connection('mssql-squareone')->select($query)[0];
         $results['t'] = DB::connection('mssql-toronto')->select($query)[0];
@@ -275,19 +328,20 @@ DATABASE QUERIES
 
     protected function getAdwordsCostForDate($date)
     {
-    	$query = "SELECT sum(cost)/1000000 AS sum FROM adword_performance_hour WHERE DATE='$date'";
+        $query = "SELECT sum(cost)/1000000 AS sum FROM adword_performance_hour WHERE DATE='$date'";
         $results = DB::connection('mysql')->select($query)[0]->sum;
 
-    	return $results;
+        return $results;
     }
 
     protected function getAdwordsRangeAverage($from, $to)
     {
-    	$query = "SELECT sum(cost)/1000000 AS sum FROM adword_performance_hour WHERE DATE BETWEEN '$from' AND '$to'";
+        $query = "SELECT sum(cost)/1000000 AS sum FROM adword_performance_hour WHERE DATE BETWEEN '$from' AND '$to'";
         $results = DB::connection('mysql')->select($query)[0]->sum;
 
-    	return $results;
+        return $results;
     }
+
 
 /**
 UTILITY FUNCTIONS

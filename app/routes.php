@@ -20,8 +20,7 @@ Route::get('twitter/geodump', 'TwitterController@showLatLongForGeoSearch');
 
 /* Customer records stuff */
 Route::get('records', 'RecordsController@index');
-Route::get('records/repeats', 'RecordsController@showMonthlyRepeat');
-Route::get('records/repeats/weekly', 'RecordsController@showWeeklyRepeat');
+Route::get('records/repeats', 'RecordsController@showRepeatCustomerReport');
 
 /* Webmaster Tools stuff */
 Route::get('wmt', 'WebmasterToolsController@index');
