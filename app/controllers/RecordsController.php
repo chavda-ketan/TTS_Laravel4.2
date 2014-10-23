@@ -95,7 +95,8 @@ PAGE FUNCTIONS
 MATH FUNCTIONS
  */
 
-    protected function getAverages($absoluteSearchTotal, $absoluteRepeatTotal, $absoluteReferralTotal, $days, $start, $end)
+    protected function getAverages($absoluteSearchTotal, $absoluteRepeatTotal,
+                                   $absoluteReferralTotal, $days, $start, $end)
     {
         $average = array();
         $rangeSpend = $this->getAdwordsRangeAverage($start, $end);
@@ -113,14 +114,6 @@ MATH FUNCTIONS
         $averages['referral'] = round($averageReferral, 2);
 
         return $averages;
-    }
-
-
-    protected function getAveragesTrend($absoluteSearchTotal, $absoluteRepeatTotal, $absoluteReferralTotal, $days, $start, $end)
-    {
-
-
-        return $averagesTrend;
     }
 
 /**
@@ -312,7 +305,10 @@ DATABASE QUERIES
 
     protected function getRevenueForDate($date)
     {
-        $services = '3133, 3134, 3033, 3203, 3197, 3195, 3167, 3168, 3141, 3135, 3173, 3172, 3136, 3201, 3140, 3137, 3200, 7430, 7432, 7752, 7603, 7601, 7599, 1111';
+        $services = '3133, 3134, 3033, 3203, 3197, 3195, 3167, 3168, 3141, 3135,
+                     3173, 3172, 3136, 3201, 3140, 3137, 3200, 7430, 7432, 7752,
+                     7603, 7601, 7599, 1111';
+
         $query = "SELECT sum(TransactionEntry.Price * Quantity + TransactionEntry.SalesTax) AS Revenue
                   FROM [Transaction], TransactionEntry
                   WHERE TransactionEntry.TransactionNumber = [Transaction].TransactionNumber
@@ -328,7 +324,9 @@ DATABASE QUERIES
 
     protected function getAdwordsCostForDate($date)
     {
-        $query = "SELECT sum(cost)/1000000 AS sum FROM adword_performance_hour WHERE DATE='$date'";
+        $query = "SELECT sum(cost)/1000000 AS sum FROM adword_performance_hour
+                  WHERE DATE='$date'";
+
         $results = DB::connection('mysql')->select($query)[0]->sum;
 
         return $results;
@@ -336,7 +334,9 @@ DATABASE QUERIES
 
     protected function getAdwordsRangeAverage($from, $to)
     {
-        $query = "SELECT sum(cost)/1000000 AS sum FROM adword_performance_hour WHERE DATE BETWEEN '$from' AND '$to'";
+        $query = "SELECT sum(cost)/1000000 AS sum FROM adword_performance_hour
+                  WHERE DATE BETWEEN '$from' AND '$to'";
+
         $results = DB::connection('mysql')->select($query)[0]->sum;
 
         return $results;

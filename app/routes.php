@@ -32,3 +32,11 @@ Route::get('mail/print', 'MailController@listThankedCustomers');
 
 /* Send SMS Mail */
 Route::get('sms/send', 'MailController@sendSMSEmail');
+
+
+/* inline simple shit and ajax shit and SHIT FUCK SHIT SHIT COCK ASS MOTHERFUCKER */
+Route::get('shit/track', 'ShitController@toggleTrack');
+Route::post('shit/range/add', 'ShitController@rangeAdd');
+Route::post('shit/range/del', 'ShitController@rangeDel');
+
+Route::get('shit/range/daily', 'ShitController@showRangeDailyData');

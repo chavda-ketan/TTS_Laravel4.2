@@ -12,7 +12,7 @@
             <td valign="top" height="454">
                 <div style="text-align:center;">
                     <strong><font color="#000000" size="6">THANK YOU!</font></strong><br>
-                    <a href="http://youtu.be/U4hmBmMGX90"><img src="http://techknowspace.com/img/tts-happy-customers.jpg" height="70" border="0" ><br>
+                    <a href="http://youtu.be/Du0nIZvcIJA?list=UUSG-L-Wz4uVhwmsogThExMw"><img src="http://techknowspace.com/img/tts-happy-customers.jpg" height="70" border="0" ><br>
                     Our Happy Customers</a><br>
                 </div>
              
