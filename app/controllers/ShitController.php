@@ -66,6 +66,7 @@ class ShitController extends BaseController
         }
 
         $data['dates'] = array_reverse($data['dates']);
+        $data['class'] = str_replace('-','', $start.$end);
 
         return View::make('snippets.adwordsrange', $data);
         // return var_dump($data);
@@ -124,8 +125,8 @@ class ShitController extends BaseController
         $adwordsData['ctr'] = number_format($adword->ctr, 2);
         $adwordsData['cpc'] = number_format($adword->cpc, 2);
         $adwordsData['qs'] = number_format($adword->qs, 1);
-        $adwordsData['imp'] = number_format($adword->imp / $dd);
-        $adwordsData['cost'] = number_format($adword->cost / $dd / 1000000);
+        $adwordsData['imp'] = ($adword->imp / $dd);
+        $adwordsData['cost'] = ($adword->cost / $dd / 1000000);
 
         // Mobile
         $adwordsData['pos_m'] = number_format($adword_m->pos, 1);
@@ -133,12 +134,21 @@ class ShitController extends BaseController
         $adwordsData['ctr_m'] = number_format($adword_m->ctr, 2);
         $adwordsData['cpc_m'] = number_format($adword_m->cpc, 2);
         $adwordsData['qs_m'] = number_format($adword_m->qs, 1);
-        $adwordsData['imp_m'] = number_format($adword_m->imp / $dd);
-        $adwordsData['cost_m'] = number_format($adword_m->cost / $dd / 1000000);
+        $adwordsData['imp_m'] = ($adword_m->imp / $dd);
+        $adwordsData['cost_m'] = ($adword_m->cost / $dd / 1000000);
+
         $adwordsData['rms_wo'] = number_format($rms->wo / $dd, 2);
-        $adwordsData['rms_sale'] = number_format($rms->sale / $dd);
+        $adwordsData['rms_sale'] = ($rms->sale / $dd);
+
         $adwordsData['campaigns'] = $campaigns;
 
         return $adwordsData;
+    }
+
+    public function divideAndFormat($formula)
+    {
+
+
+        return $answer;
     }
 }
