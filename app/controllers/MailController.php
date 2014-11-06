@@ -160,7 +160,7 @@ class MailController extends BaseController
     private function loadCustomersToThank()
     {
         // $date = date("Y-m-d", strtotime("-150 days"));
-        $date = date("Y-m-d", strtotime("-7 days"));
+        $date = date("Y-m-d", strtotime("-30 days"));
         $date .= ' 00:00:00';
         // $date2 = date("Y-m-d", strtotime("-1 days"));
         $date2 = date("Y-m-d", strtotime("+2"));

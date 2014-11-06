@@ -8,10 +8,20 @@ class RecordsController extends BaseController
         return $this->showRepeatCustomerReport();
     }
 
+    public function debug()
+    {
+        $today = new DateTime();
+
+        $count['total'] = $this->getTotalCustomersForDay($today);
+        $count['repeat'] = $this->getRepeatCustomersForDay($today);
+        $count['referral'] = $this->getReferralCustomersForDay($today);
+
+        return var_dump($count);
+    }
+
 /**
 PAGE FUNCTIONS
  */
-
     public function showRepeatCustomerReport()
     {
         $start = Input::get('start');
@@ -27,7 +37,7 @@ PAGE FUNCTIONS
             $data['end'] = date('Y-m-d');
         }
 
-        $dailyTotals = $this->iterateOverDateRange($data);
+        $dailyTotals = $this->iterateOverDateRangeRepeat($data);
 
         /* Instantiate all the things */
         $data['trends'] = array();
@@ -91,6 +101,41 @@ PAGE FUNCTIONS
         return View::make('reports.repeatcustomers', $data);
     }
 
+
+    public function showLandingPageReport()
+    {
+        $start = Input::get('start');
+        $end = Input::get('end');
+
+        $data['dates'] = '';
+
+        $data['start'] = $start ? $start : date('Y-m-d', strtotime("30 days ago"));
+        $data['end'] = $end ? $end : date('Y-m-d');
+
+        $today = new DateTime();
+
+        if ($end > $today) {
+            $data['end'] = date('Y-m-d');
+        }
+
+        $begin = new DateTime($data['start']);
+        $end = new DateTime($data['end']);
+
+        $end->add(new DateInterval('P1D'));
+
+        $interval = DateInterval::createFromDateString('1 day');
+        $period = new DatePeriod($begin, $interval, $end);
+
+        foreach ($period as $day) {
+            $date = $day->format("Y-m-d");
+
+        }
+
+        $data['showpicker'] = 1;
+
+        return View::make('reports.landing', $data);
+    }
+
 /**
 MATH FUNCTIONS
  */
@@ -120,7 +165,7 @@ MATH FUNCTIONS
 DATE RANGE FUNCTIONS
  */
 
-    protected function iterateOverDateRange($dates)
+    protected function iterateOverDateRangeRepeat($dates)
     {
         $begin = new DateTime($dates['start']);
         $end = new DateTime($dates['end']);
@@ -204,7 +249,7 @@ DATE RANGE FUNCTIONS
     }
 
 /**
-DATABASE QUERIES
+DATABASE QUERIES - REPEATS AND ADWORDS REPORT
  */
 
     protected function totalCustomerQueryRange($startDate, $endDate)
@@ -224,12 +269,14 @@ DATABASE QUERIES
                 (
                     SELECT OrderEntryID FROM OrderRework
                 )
+                AND Time >= '$startDate'
                 AND Time <= '$endDate'
 
                 ORDER BY CustomerID";
 
         $results['m'] = DB::connection('mssql-squareone')->select($query);
         $results['t'] = DB::connection('mssql-toronto')->select($query);
+        // $results['t'] = array();
 
         $results = $this->addLocation($results);
 
@@ -260,11 +307,13 @@ DATABASE QUERIES
                 (
                     SELECT OrderEntryID FROM OrderRework
                 )
+                AND Time >= '$startDate'
                 AND Time <= '$endDate'
                 ORDER BY CustomerID";
 
         $results['m'] = DB::connection('mssql-squareone')->select($query);
         $results['t'] = DB::connection('mssql-toronto')->select($query);
+        // $results['t'] = array();
 
         $results = $this->addLocation($results);
 
@@ -292,11 +341,13 @@ DATABASE QUERIES
                 (
                     SELECT OrderEntryID FROM OrderRework
                 )
+                AND Time >= '$startDate'
                 AND Time <= '$endDate'
                 ORDER BY CustomerID";
 
         $results['m'] = DB::connection('mssql-squareone')->select($query);
         $results['t'] = DB::connection('mssql-toronto')->select($query);
+        // $results['t'] = array();
 
         $results = $this->addLocation($results);
 
@@ -342,6 +393,74 @@ DATABASE QUERIES
         return $results;
     }
 
+/**
+DATABASE - LANDING PAGES
+ */
+
+    protected function getLandingPageMetricsForDayCategory($category, $date)
+    {
+        $query = "SELECT SUM(organic) AS organic,
+                  SUM(cpc) AS cpc
+                  FROM google_analytics_landing_cache
+                  WHERE category = '$category'
+                  AND date = '$date'";
+
+        $result = DB::connection('mysql')->select($query)[0];
+
+        $return['seo'] = $result->organic;
+        $return['ppc'] = $result->cpc;
+
+        return $return;
+    }
+
+    protected function getLandingPageMetricsForDayBrand($brand, $date)
+    {
+        $query = "SELECT SUM(organic) AS organic,
+                  SUM(cpc) AS cpc
+                  FROM google_analytics_landing_cache
+                  WHERE brand = '$brand'
+                  AND date = '$date'";
+
+        $result = DB::connection('mysql')->select($query)[0];
+
+        $return['seo'] = $result->organic;
+        $return['ppc'] = $result->cpc;
+
+        return $return;
+    }
+
+    protected function getLandingPageMetricsForDayType($type, $date)
+    {
+        $query = "SELECT SUM(organic) AS organic,
+                  SUM(cpc) AS cpc
+                  FROM google_analytics_landing_cache
+                  WHERE type = '$type'
+                  AND date = '$date'";
+
+        $result = DB::connection('mysql')->select($query)[0];
+
+        $return['seo'] = $result->organic;
+        $return['ppc'] = $result->cpc;
+
+        return $return;
+    }
+
+    protected function getLandingPageMetricsForDayTypeBrand($type, $brand, $date)
+    {
+        $query = "SELECT SUM(organic) AS organic,
+                  SUM(cpc) AS cpc
+                  FROM google_analytics_landing_cache
+                  WHERE type = '$type'
+                  AND brand = '$brand'
+                  AND date = '$date'";
+
+        $result = DB::connection('mysql')->select($query)[0];
+
+        $return['seo'] = $result->organic;
+        $return['ppc'] = $result->cpc;
+
+        return $return;
+    }
 
 /**
 UTILITY FUNCTIONS

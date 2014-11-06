@@ -21,6 +21,10 @@ Route::get('twitter/geodump', 'TwitterController@showLatLongForGeoSearch');
 /* Customer records stuff */
 Route::get('records', 'RecordsController@index');
 Route::get('records/repeats', 'RecordsController@showRepeatCustomerReport');
+Route::get('records/repeats/debug', 'RecordsController@debug');
+
+/* Landing page records */
+Route::get('records/landing', 'RecordsController@showLandingPageReport');
 
 /* Webmaster Tools stuff */
 Route::get('wmt', 'WebmasterToolsController@index');
@@ -33,10 +37,8 @@ Route::get('mail/print', 'MailController@listThankedCustomers');
 /* Send SMS Mail */
 Route::get('sms/send', 'MailController@sendSMSEmail');
 
-
 /* inline simple shit and ajax shit and SHIT FUCK SHIT SHIT COCK ASS MOTHERFUCKER */
 Route::get('shit/track', 'ShitController@toggleTrack');
 Route::post('shit/range/add', 'ShitController@rangeAdd');
 Route::post('shit/range/del', 'ShitController@rangeDel');
-
 Route::get('shit/range/daily', 'ShitController@showRangeDailyData');
