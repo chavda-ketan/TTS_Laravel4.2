@@ -33,6 +33,9 @@
 
     <script type="text/javascript">
         var dates = [ {{ $dates }} ];
+        var general = [ {{ $dates }} ];
+        var repair = [ {{ $dates }} ];
+
 
         var datalabel = {
                 enabled: true,
@@ -50,28 +53,6 @@
                     }
                 }
             }
-
-        var datalabelAvg = {
-                enabled: true,
-                color: 'black',
-                style: {
-                    fontSize: '12px',
-                    // fontWeight: 'bold',
-                },
-                formatter: function () {
-                    return '$' + this.y;
-                }
-            }
-
-        var datalabelTrends = {
-                enabled: true,
-                color: 'black',
-                style: {
-                    fontSize: '12px',
-                    // fontWeight: 'bold',
-                }
-            }
-
     </script>
 @stop
 
@@ -87,9 +68,6 @@
         });
 
         $('#graph').highcharts({
-            title: {
-                text: 'Repeat Customers & Avg Adwords Spend Per New Customer'
-            },
             credits: {
                 enabled: false
             },
@@ -163,82 +141,21 @@
 
             tooltip: {
                 shared: true,
-                useHTML: true,
-                formatter: function() {
-                    var points = '<table class="tip"><caption>' + this.x + '</caption><tbody>';
-
-                    $.each(this.points,function(i,point){
-
-                        points += '<tr><th style="color: black">' + point.series.name
-                        + ': </th><td style="text-align: right"><b>' + point.y;
-
-                        if (isNaN(Math.round(point.percentage))) {
-                            points += '</b></td></tr>';
-
-                        } else {
-                            points += '</b> (' + Math.round(point.percentage) + '%)</td></tr>';
-                        };
-
-                    });
-
-                    points += '<tr><th>Total: </th><td style="text-align:right"><b>'+ this.points[0].total + '</b></td></tr>';
-                    points += '<tr><th>&nbsp;</th><td style="text-align:right"><b>&nbsp;</b></td></tr>';
-
-
-                    return points;
-                }
-                // pointFormat: '<span style="color:black">{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>',
             },
 
             series: [{
-                name: 'Search',
-                data: total,
+                name: 'General',
+                data: general,
                 dataLabels: datalabel,
                 yAxis: 0,
                 type: 'column'
             }, {
-                name: 'Repeat',
-                data: repeat,
+                name: 'Repair',
+                data: repair,
                 dataLabels: datalabel,
                 yAxis: 0,
                 type: 'column'
-            }, {
-                name: 'Referral',
-                data: referral,
-                dataLabels: datalabel,
-                color: '#40d040',
-                yAxis: 0,
-                type: 'column'
-            }, {
-                name: 'Avg Spend',
-                data: spend,
-                dataLabels: datalabelAvg,
-                color: 'red',
-                yAxis: 1,
-                type: 'line',
-            }, {
-                name: 'Trending Search Avg',
-                data: searchtrend,
-                dataLabels: datalabelTrends,
-                // color: 'red',
-                yAxis: 2,
-                type: 'line',
-            }, {
-                name: 'Trending Repeat Avg',
-                data: repeattrend,
-                dataLabels: datalabelTrends,
-                // color: 'red',
-                yAxis: 2,
-                type: 'line',
-            }, {
-                name: 'Trending Referral Avg',
-                data: referraltrend,
-                dataLabels: datalabelTrends,
-                // color: 'red',
-                yAxis: 2,
-                type: 'line',
-            },
-
+            }
             ]
         });
 

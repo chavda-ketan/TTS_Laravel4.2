@@ -22,6 +22,11 @@ class RecordsController extends BaseController
 /**
 PAGE FUNCTIONS
  */
+
+    /**
+     * The repeat customer and adwords spend report
+     * @return [type] [description]
+     */
     public function showRepeatCustomerReport()
     {
         $start = Input::get('start');
@@ -128,6 +133,7 @@ PAGE FUNCTIONS
 
         foreach ($period as $day) {
             $date = $day->format("Y-m-d");
+            $data['dates'] .= "'$date', ";
 
         }
 
