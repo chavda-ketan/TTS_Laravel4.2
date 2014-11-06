@@ -112,7 +112,7 @@ PAGE FUNCTIONS
         $start = Input::get('start');
         $end = Input::get('end');
 
-        $data['dates'] = '';
+        $data['dates'] = $data['metrics'] = '';
 
         $data['start'] = $start ? $start : date('Y-m-d', strtotime("30 days ago"));
         $data['end'] = $end ? $end : date('Y-m-d');
@@ -136,8 +136,6 @@ PAGE FUNCTIONS
             $data['dates'] .= "'$date', ";
 
         }
-
-        $data['showpicker'] = 1;
 
         return View::make('reports.landing', $data);
     }

@@ -8,20 +8,38 @@
         <div class="col-sm-12" style="margin-bottom: 20px">
             <h2>Landing Page Metrics</h2>
         </div>
-        @if(isset($showpicker))
-            <div class='col-sm-4'>
-                <form role="form" action="landing" id="datepicker-form">
-                    <div class="form-group">
-                        <div class="input-daterange input-group" id="datepicker">
-                            <input type="text" class="input-sm form-control" name="start" value='{{ $start }}'>
-                            <span class="input-group-addon">to</span>
-                            <input type="text" class="input-sm form-control" name="end" value='{{ date("Y-m-d") }}'>
-                        </div>
+
+        <div class='col-sm-12'>
+            <form role="form" action="landing" id="datepicker-form">
+                <div class="form-group">
+                    <div class="input-daterange input-group" id="datepicker">
+                        <input type="text" class="input-sm form-control" name="start" value='{{ $start }}'>
+                        <span class="input-group-addon">to</span>
+                        <input type="text" class="input-sm form-control" name="end" value='{{ date("Y-m-d") }}'>
                     </div>
-                    <button type="submit" class="btn btn-default">Submit</button>
-                </form>
-            </div>
-        @endif
+                </div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">Panel heading without title</div>
+  <div class="panel-body">
+    Panel content
+  </div>
+</div>
+                <div class="form-group">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" id="inlineCheckbox1" value="option1"> 1
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="checkbox" id="inlineCheckbox2" value="option2"> 2
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="checkbox" id="inlineCheckbox3" value="option3"> 3
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-default">Submit</button>
+            </form>
+        </div>
 
         <div class='col-sm-12'>
             <div id='graph' style="width: 100%; height: 800px;">
@@ -33,9 +51,12 @@
 
     <script type="text/javascript">
         var dates = [ {{ $dates }} ];
-        var general = [ {{ $dates }} ];
         var repair = [ {{ $dates }} ];
+        var general = [ {{ $dates }} ];
 
+        @if(isset($metrics['iphone']))
+            var iphone = [ {{ $metrics['iphone'] }} ];
+        @endif
 
         var datalabel = {
                 enabled: true,
@@ -102,41 +123,9 @@
             },
 
             yAxis: [{
-                labels: {
-                    enabled: false
-                },
                 title: {
-                    text: 'Ratio'
+                    text: 'Inbound Visits'
                 },
-                height: '60%',
-                top: '40%'
-
-            },{
-                title: {
-                    text: 'Avg Spend'
-                },
-                height: '20%',
-                top: '20%',
-                // endOnTick: false,
-                offset: 0,
-                plotLines : [{
-                    color : 'blue',
-                    dashStyle : 'dot',
-                    width : 2,
-                    label : {
-                        text : 'Aggregate Average Spend - $'
-                    }
-                }]
-            },{
-                title: {
-                    text: 'Trending Avg'
-                },
-                endOnTick: false,
-                height: '18%',
-                top: '0%',
-                offset: 0,
-                min: 0
-
             }],
 
             tooltip: {
@@ -147,13 +136,13 @@
                 name: 'General',
                 data: general,
                 dataLabels: datalabel,
-                yAxis: 0,
+                // yAxis: 0,
                 type: 'column'
             }, {
                 name: 'Repair',
                 data: repair,
                 dataLabels: datalabel,
-                yAxis: 0,
+                // yAxis: 0,
                 type: 'column'
             }
             ]
