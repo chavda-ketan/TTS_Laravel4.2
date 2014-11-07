@@ -106,13 +106,17 @@ PAGE FUNCTIONS
         return View::make('reports.repeatcustomers', $data);
     }
 
-
     public function showLandingPageReport()
     {
         $start = Input::get('start');
         $end = Input::get('end');
 
         $data['dates'] = $data['metrics'] = '';
+
+        /* WHOLE LOTTA THIS */
+        // $data['metrics']['iphone'] =
+        // $data['metrics']['samsung'] =
+        // $data['metrics']['blackberry'] = '';
 
         $data['start'] = $start ? $start : date('Y-m-d', strtotime("30 days ago"));
         $data['end'] = $end ? $end : date('Y-m-d');
@@ -135,6 +139,8 @@ PAGE FUNCTIONS
             $date = $day->format("Y-m-d");
             $data['dates'] .= "'$date', ";
 
+            $iphone = $this->getLandingPageMetricsForDayTypeBrand('smartphones', 'iphone', $date);
+            $data['metrics']['iphone'] .= $iphone['seo'].',';
         }
 
         return View::make('reports.landing', $data);
