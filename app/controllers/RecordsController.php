@@ -111,12 +111,13 @@ PAGE FUNCTIONS
         $start = Input::get('start');
         $end = Input::get('end');
 
-        $data['dates'] = $data['metrics'] = '';
+        $data['dates'] = '';
+        $data['metrics'] = array();
 
-        /* WHOLE LOTTA THIS */
-        // $data['metrics']['iphone'] =
-        // $data['metrics']['samsung'] =
-        // $data['metrics']['blackberry'] = '';
+        # Smartphones
+        if (Input::get('iphone')) { $data['metrics']['iphone'] = ''; }
+        if (Input::get('samsung')) { $data['metrics']['samsung'] = ''; }
+        // if (isset(Input::get('blackberry'))) { $data['metrics']['blackberry'] = ''; }
 
         $data['start'] = $start ? $start : date('Y-m-d', strtotime("30 days ago"));
         $data['end'] = $end ? $end : date('Y-m-d');
@@ -139,8 +140,10 @@ PAGE FUNCTIONS
             $date = $day->format("Y-m-d");
             $data['dates'] .= "'$date', ";
 
-            $iphone = $this->getLandingPageMetricsForDayTypeBrand('smartphones', 'iphone', $date);
-            $data['metrics']['iphone'] .= $iphone['seo'].',';
+            foreach ($data['metrics'] as $key => $value) {
+                $counts = $this->getLandingPageMetricsForDayTypeBrand('smartphones', $key, $date);
+                $data['metrics'][$key] .= $counts['seo'].',';
+            }
         }
 
         return View::make('reports.landing', $data);

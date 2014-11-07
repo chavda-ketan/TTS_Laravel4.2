@@ -25,6 +25,7 @@ Route::get('records/repeats/debug', 'RecordsController@debug');
 
 /* Landing page records */
 Route::get('records/landing', 'RecordsController@showLandingPageReport');
+Route::post('records/landing', 'RecordsController@showLandingPageReport');
 
 /* Webmaster Tools stuff */
 Route::get('wmt', 'WebmasterToolsController@index');
