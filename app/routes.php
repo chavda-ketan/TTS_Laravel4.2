@@ -43,3 +43,14 @@ Route::get('shit/track', 'ShitController@toggleTrack');
 Route::post('shit/range/add', 'ShitController@rangeAdd');
 Route::post('shit/range/del', 'ShitController@rangeDel');
 Route::get('shit/range/daily', 'ShitController@showRangeDailyData');
+
+
+/* Supplier shit */
+Route::get('supplier', 'InventoryController@supplierForm');
+Route::post('supplier', 'InventoryController@addSupplier');
+
+Route::get('supplier', 'InventoryController@supplierForm');
+Route::post('supplier', 'InventoryController@addSupplier');
+
+Route::get('supplier', 'InventoryController@supplierForm');
+Route::post('supplier', 'InventoryController@addSupplier');

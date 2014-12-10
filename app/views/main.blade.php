@@ -40,24 +40,8 @@
                 </button>
                 <a class="navbar-brand" href="index.html">TechKnow Space Internal v2</a>
             </div>
+        </nav>
 
-<!--             <div class="navbar-default sidebar" role="navigation">
-                <div class="sidebar-nav navbar-collapse">
-                    <ul class="nav" id="side-menu">
-                        <li>
-                            <a href="#"><i class="fa fa-bar-chart-o fa-fw"></i> Customer Reports<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li>
-                                    <a href="/records/repeats">Repeat Customers</a>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
-            </div>
- -->        </nav>
-
-    <!-- <div id="page-wrapper"> -->
         <div class="container">
 
             <!-- Content -->
@@ -65,7 +49,6 @@
             <!-- ./ content -->
 
         </div>
-    <!-- </div> -->
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>

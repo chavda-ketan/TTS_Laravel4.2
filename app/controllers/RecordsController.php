@@ -25,7 +25,6 @@ PAGE FUNCTIONS
 
     /**
      * The repeat customer and adwords spend report
-     * @return [type] [description]
      */
     public function showRepeatCustomerReport()
     {
@@ -106,6 +105,9 @@ PAGE FUNCTIONS
         return View::make('reports.repeatcustomers', $data);
     }
 
+    /**
+     * The landing page impressions report
+     */
     public function showLandingPageReport()
     {
         $start = Input::get('start');
@@ -117,7 +119,50 @@ PAGE FUNCTIONS
         # Smartphones
         if (Input::get('iphone')) { $data['metrics']['iphone'] = ''; }
         if (Input::get('samsung')) { $data['metrics']['samsung'] = ''; }
-        // if (isset(Input::get('blackberry'))) { $data['metrics']['blackberry'] = ''; }
+        if (Input::get('blackberry')) { $data['metrics']['blackberry'] = ''; }
+        if (Input::get('htc')) { $data['metrics']['htc'] = ''; }
+        if (Input::get('motorola')) { $data['metrics']['motorola'] = ''; }
+        if (Input::get('lg')) { $data['metrics']['lg'] = ''; }
+        if (Input::get('nokia')) { $data['metrics']['nokia'] = ''; }
+        if (Input::get('ipod')) { $data['metrics']['ipod'] = ''; }
+        if (Input::get('sony')) { $data['metrics']['sony'] = ''; }
+
+        # Laptops
+        if (Input::get('macbook')) { $data['metrics']['macbook'] = ''; }
+        if (Input::get('acer')) { $data['metrics']['acer'] = ''; }
+        if (Input::get('dell')) { $data['metrics']['dell'] = ''; }
+        if (Input::get('gateway')) { $data['metrics']['gateway'] = ''; }
+        if (Input::get('lenovo')) { $data['metrics']['lenovo'] = ''; }
+        if (Input::get('asus')) { $data['metrics']['asus'] = ''; }
+        if (Input::get('hpcompaq')) { $data['metrics']['hpcompaq'] = ''; }
+        if (Input::get('sony')) { $data['metrics']['sony'] = ''; }
+        if (Input::get('toshiba')) { $data['metrics']['toshiba'] = ''; }
+        if (Input::get('lg')) { $data['metrics']['lg'] = ''; }
+        if (Input::get('msi')) { $data['metrics']['msi'] = ''; }
+        if (Input::get('fujitsu')) { $data['metrics']['fujitsu'] = ''; }
+
+        # Tablets
+        if (Input::get('ipad')) { $data['metrics']['ipad'] = ''; }
+        if (Input::get('kindle')) { $data['metrics']['kindle'] = ''; }
+        if (Input::get('surface')) { $data['metrics']['surface'] = ''; }
+        if (Input::get('asus')) { $data['metrics']['asus'] = ''; }
+        if (Input::get('blackberry')) { $data['metrics']['blackberry'] = ''; }
+        if (Input::get('samsung')) { $data['metrics']['samsung'] = ''; }
+
+        # Consoles
+        if (Input::get('playstation')) { $data['metrics']['playstation'] = ''; }
+        if (Input::get('xbox')) { $data['metrics']['xbox'] = ''; }
+
+        # Promotions and Other
+        if (Input::get('home')) { $data['metrics']['home'] = ''; }
+        if (Input::get('promotions')) { $data['metrics']['promotions'] = ''; }
+        if (Input::get('locations')) { $data['metrics']['locations'] = ''; }
+        if (Input::get('other')) { $data['metrics']['other'] = ''; }
+
+        foreach ($data['metrics'] as $key => $value) {
+            $data['metrics'][$key]['seo'] = '';
+            $data['metrics'][$key]['ppc'] = '';
+        }
 
         $data['start'] = $start ? $start : date('Y-m-d', strtotime("30 days ago"));
         $data['end'] = $end ? $end : date('Y-m-d');
@@ -131,18 +176,48 @@ PAGE FUNCTIONS
         $begin = new DateTime($data['start']);
         $end = new DateTime($data['end']);
 
-        $end->add(new DateInterval('P1D'));
+        // $end->add(new DateInterval('P1D'));
 
         $interval = DateInterval::createFromDateString('1 day');
         $period = new DatePeriod($begin, $interval, $end);
+
+        $data['mode'] = Input::get('metrics');
+        $data['chartmode'] = Input::get('chartmode');
+
+        // Populate the data
 
         foreach ($period as $day) {
             $date = $day->format("Y-m-d");
             $data['dates'] .= "'$date', ";
 
             foreach ($data['metrics'] as $key => $value) {
-                $counts = $this->getLandingPageMetricsForDayTypeBrand('smartphones', $key, $date);
-                $data['metrics'][$key] .= $counts['seo'].',';
+                if (Input::get('smartphones')) {
+                    $smartphones = $this->getLandingPageMetricsForDayTypeBrand('smartphones', $key, $date);
+                    // $keyname = $key.'_p';
+                    $keyname = $key;
+
+                    $data['metrics'][$keyname]['seo'] .= $smartphones['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $smartphones['ppc'].',';
+                    // unset($data['metrics'][$key]);
+                }
+                if (Input::get('laptops')) {
+                    $laptops = $this->getLandingPageMetricsForDayTypeBrand('laptops', $key, $date);
+                    // $keyname = $key.'_l';
+                    $keyname = $key;
+
+                    $data['metrics'][$keyname]['seo'] .= $laptops['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $laptops['ppc'].',';
+                    // unset($data['metrics'][$key]);
+                }
+                if (Input::get('tablets')) {
+                    $tablets = $this->getLandingPageMetricsForDayTypeBrand('tablets', $key, $date);
+                    // $keyname = $key.'_t';
+                    $keyname = $key;
+
+                    $data['metrics'][$keyname]['seo'] .= $tablets['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $tablets['ppc'].',';
+                    // unset($data['metrics'][$key]);
+                }
             }
         }
 
@@ -420,8 +495,13 @@ DATABASE - LANDING PAGES
 
         $result = DB::connection('mysql')->select($query)[0];
 
-        $return['seo'] = $result->organic;
-        $return['ppc'] = $result->cpc;
+        if (!isset($result->organic)) {
+            $return['seo'] = 0;
+            $return['ppc'] = 0;
+        } else {
+            $return['seo'] = $result->organic;
+            $return['ppc'] = $result->cpc;
+        }
 
         return $return;
     }
@@ -436,8 +516,13 @@ DATABASE - LANDING PAGES
 
         $result = DB::connection('mysql')->select($query)[0];
 
-        $return['seo'] = $result->organic;
-        $return['ppc'] = $result->cpc;
+        if (!isset($result->organic)) {
+            $return['seo'] = 0;
+            $return['ppc'] = 0;
+        } else {
+            $return['seo'] = $result->organic;
+            $return['ppc'] = $result->cpc;
+        }
 
         return $return;
     }
@@ -452,8 +537,13 @@ DATABASE - LANDING PAGES
 
         $result = DB::connection('mysql')->select($query)[0];
 
-        $return['seo'] = $result->organic;
-        $return['ppc'] = $result->cpc;
+        if (!isset($result->organic)) {
+            $return['seo'] = 0;
+            $return['ppc'] = 0;
+        } else {
+            $return['seo'] = $result->organic;
+            $return['ppc'] = $result->cpc;
+        }
 
         return $return;
     }
@@ -469,8 +559,13 @@ DATABASE - LANDING PAGES
 
         $result = DB::connection('mysql')->select($query)[0];
 
-        $return['seo'] = $result->organic;
-        $return['ppc'] = $result->cpc;
+        if (!isset($result->organic)) {
+            $return['seo'] = 0;
+            $return['ppc'] = 0;
+        } else {
+            $return['seo'] = $result->organic;
+            $return['ppc'] = $result->cpc;
+        }
 
         return $return;
     }

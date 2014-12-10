@@ -22,54 +22,93 @@
 
                 </div>
             </div>
-            <div class='col-sm-4' style="font-size: 1.3em">
-                <label class="checkbox-inline"><input type="checkbox" id="smartphone" name="option1"> Organic</label>
-                <label class="checkbox-inline"><input type="checkbox" id="smartphone" name="option1"> PPC</label>
+            <div class='col-sm-4'>
+                <label class="radio-inline"><input type="radio" name="metrics" value="seo"> Organic</label>
+                <label class="radio-inline"><input type="radio" name="metrics" value="ppc"> PPC</label>
+                <label class="radio-inline"><input type="radio" name="metrics" value="both" checked='checked'> Both</label>
+                <span>&nbsp;</span>
+                <span>&nbsp;</span>
+                <span>&nbsp;</span>
+                <label class="radio-inline"><input type="radio" name="chartmode" value="column"> Column</label>
+                <label class="radio-inline"><input type="radio" name="chartmode" value="line" checked='checked'> Line</label>
 
-                <button type="submit" class="btn btn-default btn-primary" style="margin-left: 20px;">Submit</button>
             </div>
             <div class='col-sm-4'>
+
+                <button type="submit" class="btn btn-primary" style="margin-left: 0px;">Submit</button>
             </div>
         </div>
 
         <div class="row">
-            <div class='col-md-4'>
-                <div class="panel panel-primary">
-                    <div class="panel-heading"><label><input type="checkbox" id="smartphone" name="option1"> Smartphones</label></div>
+            <div class='col-md-12'>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <label class="checkbox-inline"><input type="checkbox" name="other"> Other</label>
+                    </div>
                     <div class="panel-body">
                         <div class="form-group">
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="phonebox" id="inlineCheckbox1" name="iphone"> iPhone
+                                <input type="checkbox" class="otherbox" name="playstation"> Playstation
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="phonebox" id="inlineCheckbox2" name="samsung"> Samsung
+                                <input type="checkbox" class="otherbox" name="xbox"> Xbox
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="phonebox" id="inlineCheckbox3" name="blackberry"> Blackberry
+                                <input type="checkbox" class="otherbox" name="promotions"> Promotions
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="phonebox" id="inlineCheckbox3" name="htc"> HTC
+                                <input type="checkbox" class="otherbox" name="locations"> Locations
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" class="otherbox" name="home"> Home
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class='col-md-4'>
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <label class="checkbox-inline"><input type="checkbox" id="smartphones" name="smartphones"> Smartphones</label>
+                        <label class="checkbox-inline"><input type="checkbox" id="smartphones-all" name="smartphones-all"> All Smartphones</label>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label class="checkbox-inline">
+                                <input type="checkbox" class="phonebox" id="iphone-smartphone" name="iphone"> iPhone
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" class="phonebox" id="samsung-smartphone" name="samsung"> Samsung
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" class="phonebox" id="blackberry-smartphone" name="blackberry"> Blackberry
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" class="phonebox" id="htc-smartphone" name="htc"> HTC
                             </label>
                         </div>
 
                         <div class="form-group">
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="phonebox" id="inlineCheckbox3" name="motorola"> Motorola
+                                <input type="checkbox" class="phonebox" id="motorola-smartphone" name="motorola"> Motorola
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="phonebox" id="inlineCheckbox3" name="lg"> LG
+                                <input type="checkbox" class="phonebox" id="lg-smartphone" name="lg"> LG
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="phonebox" id="inlineCheckbox3" name="nokia"> Nokia
+                                <input type="checkbox" class="phonebox" id="nokia-smartphone" name="nokia"> Nokia
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="phonebox" id="inlineCheckbox3" name="ipod"> iPod
+                                <input type="checkbox" class="phonebox" id="ipod-smartphone" name="ipod"> iPod
                             </label>
                         </div>
 
                         <div class="form-group">
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="phonebox" id="inlineCheckbox3" name="sony"> Sony
+                                <input type="checkbox" class="phonebox" id="sony-smartphone" name="sony"> Sony
                             </label>
                         </div>
                     </div>
@@ -78,50 +117,53 @@
 
             <div class='col-md-4'>
                 <div class="panel panel-success">
-                    <div class="panel-heading"><label><input type="checkbox" id="laptop" name="option1"> Laptops</label></div>
+                    <div class="panel-heading">
+                        <label class="checkbox-inline"><input type="checkbox" id="laptops" name="laptops"> Laptops</label>
+                        <label class="checkbox-inline"><input type="checkbox" id="laptops-all" name="laptops-all"> All Laptops</label>
+                    </div>
                     <div class="panel-body">
                         <div class="form-group">
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="laptopbox" id="inlineCheckbox1" name="option1"> Macbook
+                                <input type="checkbox" class="laptopbox" id="macbook-laptop" name="macbook"> Macbook
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="laptopbox" id="inlineCheckbox2" name="option2"> Acer
+                                <input type="checkbox" class="laptopbox" id="acer-laptop" name="acer"> Acer
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="laptopbox" id="inlineCheckbox3" name="option3"> Dell
+                                <input type="checkbox" class="laptopbox" id="dell-laptop" name="dell"> Dell
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="laptopbox" id="inlineCheckbox3" name="option3"> Gateway
-                            </label>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="checkbox-inline">
-                                <input type="checkbox" class="laptopbox" id="inlineCheckbox1" name="option1"> Lenovo
-                            </label>
-                            <label class="checkbox-inline">
-                                <input type="checkbox" class="laptopbox" id="inlineCheckbox2" name="option2"> Asus
-                            </label>
-                            <label class="checkbox-inline">
-                                <input type="checkbox" class="laptopbox" id="inlineCheckbox3" name="option3"> HP-Compaq
-                            </label>
-                            <label class="checkbox-inline">
-                                <input type="checkbox" class="laptopbox" id="inlineCheckbox3" name="option3"> Sony
+                                <input type="checkbox" class="laptopbox" id="gateway-laptop" name="gateway"> Gateway
                             </label>
                         </div>
 
                         <div class="form-group">
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="laptopbox" id="inlineCheckbox1" name="option1"> Toshiba
+                                <input type="checkbox" class="laptopbox" id="lenovo-laptop" name="lenovo"> Lenovo
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="laptopbox" id="inlineCheckbox2" name="option2"> LG
+                                <input type="checkbox" class="laptopbox" id="asus-laptop" name="asus"> Asus
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="laptopbox" id="inlineCheckbox3" name="option3"> MSI
+                                <input type="checkbox" class="laptopbox" id="hp-compaq-laptop" name="hpcompaq"> HP-Compaq
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="laptopbox" id="inlineCheckbox3" name="option3"> Fujitsu
+                                <input type="checkbox" class="laptopbox" id="sony-laptop" name="sony"> Sony
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="checkbox-inline">
+                                <input type="checkbox" class="laptopbox" id="toshiba-laptop" name="toshiba"> Toshiba
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" class="laptopbox" id="lg-laptop" name="lg"> LG
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" class="laptopbox" id="msi-laptop" name="msi"> MSI
+                            </label>
+                            <label class="checkbox-inline">
+                                <input type="checkbox" class="laptopbox" id="fujitsu-laptop" name="fujitsu"> Fujitsu
                             </label>
                         </div>
                     </div>
@@ -129,61 +171,64 @@
             </div>
 
             <div class='col-md-4'>
-                <div class="panel panel-info ">
-                    <div class="panel-heading"><label><input type="checkbox" id="tablet" name="option1"> Tablets</label></div>
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <label class="checkbox-inline"><input type="checkbox" id="tablets" name="tablets"> Tablets</label>
+                        <label class="checkbox-inline"><input type="checkbox" id="tablets-all" name="tablets-all"> All Tablets</label>
+                    </div>
                     <div class="panel-body">
                         <div class="form-group">
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="tabletbox" id="inlineCheckbox1" name="option1"> iPad
+                                <input type="checkbox" class="tabletbox" id="ipad-tablet" name="ipad"> iPad
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="tabletbox" id="inlineCheckbox2" name="option2"> Kindle
+                                <input type="checkbox" class="tabletbox" id="kindle-tablet" name="kindle"> Kindle
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="tabletbox" id="inlineCheckbox3" name="option3"> Surface
+                                <input type="checkbox" class="tabletbox" id="surface-tablet" name="surface"> Surface
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="tabletbox" id="inlineCheckbox3" name="option3"> Asus
+                                <input type="checkbox" class="tabletbox" id="asus-tablet" name="asus"> Asus
                             </label>
                         </div>
 
                         <div class="form-group">
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="tabletbox" id="inlineCheckbox1" name="option1"> Blackberry
+                                <input type="checkbox" class="tabletbox" id="blackberry-tablet" name="blackberry"> Blackberry
                             </label>
                             <label class="checkbox-inline">
-                                <input type="checkbox" class="tabletbox" id="inlineCheckbox2" name="option2"> Samsung
+                                <input type="checkbox" class="tabletbox" id="samsung-tablet" name="samsung"> Samsung
                             </label>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </form>
 
+    <div class="row">
         <div class='col-sm-12'>
-            <div id='graph' style="width: 100%; height: 800px;">
+            <div id='graph' style="width: 100%; height: 700px;">
 
             </div>
         </div>
-
     </div>
 
     <script type="text/javascript">
         var dates = [ {{ $dates }} ];
 
-        @foreach($metrics as $type => $metric)
-            var {{ $type }} = [ {{ $metric }} ];
-        @endforeach
+@foreach($metrics as $type => $metric)
+        var {{ $type.'_seo' }} = [ {{ $metric['seo'] }} ];
+        var {{ $type.'_ppc' }} = [ {{ $metric['ppc'] }} ];
+@endforeach
 
         var datalabel = {
                 enabled: true,
-                color: 'white',
+                color: 'black',
                 style: {
-                    fontSize: '14px',
+                    fontSize: '13px',
                     fontWeight: 'bold',
-                    textShadow: '0 -2px 0px black'
+                    // textShadow: '0 -2px 0px black'
                 },
                 formatter: function() {
                     if (this.y != 0) {
@@ -207,7 +252,7 @@
             todayHighlight: true
         });
 
-        $('#smartphone').change(function() {
+        $('#smartphones-all').change(function() {
             if($(this).is(":checked")) {
                 $('.phonebox').prop('checked', true);
                 return;
@@ -215,7 +260,7 @@
             $('.phonebox').prop('checked', false);
         });
 
-        $('#laptop').change(function() {
+        $('#laptops-all').change(function() {
             if($(this).is(":checked")) {
                 $('.laptopbox').prop('checked', true);
                 return;
@@ -223,7 +268,7 @@
             $('.laptopbox').prop('checked', false);
         });
 
-        $('#tablet').change(function() {
+        $('#tablets-all').change(function() {
             if($(this).is(":checked")) {
                 $('.tabletbox').prop('checked', true);
                 return;
@@ -281,12 +326,34 @@
 
             series: [
             @foreach($metrics as $type => $metric)
-                {
-                    name: '{{ $type }}',
-                    data: {{ $type }},
-                    dataLabels: datalabel,
-                    type: 'column'
-                },
+                @if($mode == 'both')
+                    {
+                        name: '{{ $type }} SEO',
+                        data: {{ $type."_seo" }},
+                        dataLabels: datalabel,
+                        type: '{{ $chartmode }}'
+                    },
+                    {
+                        name: '{{ $type }} PPC',
+                        data: {{ $type."_ppc" }},
+                        dataLabels: datalabel,
+                        type: '{{ $chartmode }}'
+                    },
+                @elseif($mode == 'seo')
+                    {
+                        name: '{{ $type }} SEO',
+                        data: {{ $type."_seo" }},
+                        dataLabels: datalabel,
+                        type: '{{ $chartmode }}'
+                    },
+                @else
+                    {
+                        name: '{{ $type }} PPC',
+                        data: {{ $type."_ppc" }},
+                        dataLabels: datalabel,
+                        type: '{{ $chartmode }}'
+                    },
+                @endif
             @endforeach
             ]
         });
