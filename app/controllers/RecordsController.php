@@ -1,4 +1,4 @@
-<?php
+ <?php
 
 class RecordsController extends BaseController
 {
@@ -112,6 +112,8 @@ PAGE FUNCTIONS
     {
         $start = Input::get('start');
         $end = Input::get('end');
+        $data['mode'] = Input::get('metrics');
+        $data['chartmode'] = Input::get('chartmode');
 
         $data['dates'] = '';
         $data['metrics'] = array();
@@ -157,7 +159,6 @@ PAGE FUNCTIONS
         if (Input::get('home')) { $data['metrics']['home'] = ''; }
         if (Input::get('promotions')) { $data['metrics']['promotions'] = ''; }
         if (Input::get('locations')) { $data['metrics']['locations'] = ''; }
-        if (Input::get('other')) { $data['metrics']['other'] = ''; }
 
         foreach ($data['metrics'] as $key => $value) {
             $data['metrics'][$key]['seo'] = '';
@@ -181,9 +182,6 @@ PAGE FUNCTIONS
         $interval = DateInterval::createFromDateString('1 day');
         $period = new DatePeriod($begin, $interval, $end);
 
-        $data['mode'] = Input::get('metrics');
-        $data['chartmode'] = Input::get('chartmode');
-
         // Populate the data
 
         foreach ($period as $day) {
@@ -193,30 +191,60 @@ PAGE FUNCTIONS
             foreach ($data['metrics'] as $key => $value) {
                 if (Input::get('smartphones')) {
                     $smartphones = $this->getLandingPageMetricsForDayTypeBrand('smartphones', $key, $date);
-                    // $keyname = $key.'_p';
                     $keyname = $key;
 
                     $data['metrics'][$keyname]['seo'] .= $smartphones['seo'].',';
                     $data['metrics'][$keyname]['ppc'] .= $smartphones['ppc'].',';
-                    // unset($data['metrics'][$key]);
                 }
                 if (Input::get('laptops')) {
                     $laptops = $this->getLandingPageMetricsForDayTypeBrand('laptops', $key, $date);
-                    // $keyname = $key.'_l';
                     $keyname = $key;
 
                     $data['metrics'][$keyname]['seo'] .= $laptops['seo'].',';
                     $data['metrics'][$keyname]['ppc'] .= $laptops['ppc'].',';
-                    // unset($data['metrics'][$key]);
                 }
                 if (Input::get('tablets')) {
                     $tablets = $this->getLandingPageMetricsForDayTypeBrand('tablets', $key, $date);
-                    // $keyname = $key.'_t';
                     $keyname = $key;
 
                     $data['metrics'][$keyname]['seo'] .= $tablets['seo'].',';
                     $data['metrics'][$keyname]['ppc'] .= $tablets['ppc'].',';
-                    // unset($data['metrics'][$key]);
+                }
+                if (Input::get('home')) {
+                    $home = $this->getLandingPageMetricsForDayCategory('home', $date);
+                    $keyname = $key;
+
+                    $data['metrics'][$keyname]['seo'] .= $home['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $home['ppc'].',';
+                }
+                if (Input::get('promotions')) {
+                    $promotions = $this->getLandingPageMetricsForDayCategory('promotions', $date);
+                    $keyname = $key;
+
+                    $data['metrics'][$keyname]['seo'] .= $promotions['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $promotions['ppc'].',';
+                }
+                if (Input::get('locations')) {
+                    $locations = $this->getLandingPageMetricsForDayCategory('locations', $date);
+                    $keyname = $key;
+
+                    $data['metrics'][$keyname]['seo'] .= $locations['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $locations['ppc'].',';
+
+                }
+                if (Input::get('playstation')) {
+                    $playstation = $this->getLandingPageMetricsForDayBrand('playstation', $date);
+                    $keyname = $key;
+
+                    $data['metrics'][$keyname]['seo'] .= $playstation['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $playstation['ppc'].',';
+                }
+                if (Input::get('xbox')) {
+                    $playstation = $this->getLandingPageMetricsForDayBrand('xbox', $date);
+                    $keyname = $key;
+
+                    $data['metrics'][$keyname]['seo'] .= $playstation['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $playstation['ppc'].',';
                 }
             }
         }
