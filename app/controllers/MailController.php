@@ -17,19 +17,18 @@ class MailController extends BaseController
 
                 $customer->class = 'success';
 
+
                 if ($customer->s == 't') {
-                    $name = DB::connection('mssql-toronto')->select($customerNameQuery)[0];
-
-                    $customer->firstName = $name->firstName;
-                    $customer->lastName = $name->lastName;
-                    $customer->emailAddress = $name->emailAddress;
+                    $db = 'mssql-toronto';
                 } else {
-                    $name = DB::connection('mssql-squareone')->select($customerNameQuery)[0];
-
-                    $customer->firstName = $name->firstName;
-                    $customer->lastName = $name->lastName;
-                    $customer->emailAddress = $name->emailAddress;
+                    $db = 'mssql-squareone';
                 }
+
+                $name = DB::connection($db)->select($customerNameQuery)[0];
+
+                $customer->firstName = $name->firstName;
+                $customer->lastName = $name->lastName;
+                $customer->emailAddress = $name->emailAddress;
             }
         }
 
@@ -49,7 +48,7 @@ class MailController extends BaseController
     public function testEmail()
     {
         // $this->sendThankYouEmail('Aubrey','acottle@taimalabs.com','iPhone','m',rand(99999,999999));
-        $this->sendThankYouEmail('Jason', 'connectedideas@hotmail.com', 'iPhone', 'm', rand(99999, 999999));
+        $this->sendThankYouEmail('Aubrey', 'kirtaner@gmail.com', 'iPhone', 'm', rand(99999, 999999));
         return 'Sent';
     }
 
@@ -69,6 +68,8 @@ class MailController extends BaseController
                 );
 
                 if ($validator->passes()) {
+                    // $this->checkIfBusiness($customer->EmailAddress);
+
                     /* Check if the applicable workorder already had an email sent, skip if so */
                     $select = DB::connection('mysql-godaddy')->table('thank_you_email')->where('wo_id', '=', $customer->OrderID)->first();
 
@@ -156,11 +157,55 @@ class MailController extends BaseController
         }
     }
 
+    public function getBusinessEmails()
+    {
+        $pattern = '(gmail.com|hotmail.com|yahoo.com|ymail.com|sympatico.ca|rogers.com|live.ca'
+                .'|cogeco.com|bell.net|me.com|msn.com|mail.utoronto|live.com|mac.com|icloud.com'
+                .'|outlook.com|yahoo.ca|videotron.ca|hotmail.ca|aol.com|primus.ca|cogeco.ca)';
+        $data['content'] = '';
+
+        $null = '0000-00-00 00:00:00';
+        $customers = DB::connection('mysql-godaddy')->select("SELECT * FROM thank_you_email
+                                                              -- WHERE s = 't'
+                                                              -- WHERE email_open_date != '$null'
+                                                              ORDER BY email_open_date DESC,
+                                                              google_click_date DESC");
+
+        foreach ($customers as $customer) {
+            $customerNameQuery = "SELECT OrderID, Customer.FirstName AS firstName, Customer.LastName AS lastName,
+                Customer.EmailAddress AS emailAddress, Customer.Company as company FROM [Order], Customer, OrderEntry
+                WHERE Customer.ID=[Order].CustomerID AND OrderEntry.OrderID=[Order].ID AND OrderID = $customer->wo_id";
+
+            if ($customer->s == 't') {
+                $db = 'mssql-toronto';
+            } else {
+                $db = 'mssql-squareone';
+            }
+
+            $select = DB::connection($db)->select($customerNameQuery);
+
+            if (isset($select[0])) {
+                $name = $select[0];
+
+                $customer->firstName = $name->firstName;
+                $customer->lastName = $name->lastName;
+                $customer->emailAddress = $name->emailAddress;
+                $customer->company = $name->company;
+
+                if (!preg_match("/$pattern/i", $customer->emailAddress)) {
+                    print($customer->emailAddress." - ".$customer->company."<br>");
+                }
+            }
+        }
+
+        // return View::make('emails.sms', $data);
+    }
+
     /* Pull yesterday's customers from Toronto/SquareOne dbs */
     private function loadCustomersToThank()
     {
         // $date = date("Y-m-d", strtotime("-150 days"));
-        $date = date("Y-m-d", strtotime("-30 days"));
+        $date = date("Y-m-d", strtotime("-60 days"));
         $date .= ' 00:00:00';
         // $date2 = date("Y-m-d", strtotime("-1 days"));
         $date2 = date("Y-m-d", strtotime("+2"));
@@ -238,27 +283,5 @@ class MailController extends BaseController
         $item[7752] = "Liquid Damage";
 
         return $item;
-    }
-
-    /* SMS mail */
-    public function sendSMSEmail()
-    {
-        $wo = Input::get('wo');
-        $sales = Input::get('s');
-
-        $rounded = round($sales, 2);
-
-        $content = "WO #$wo - $$rounded";
-
-        $data = array(
-            'content' => $content,
-        );
-
-        Mail::send(array('text' => 'emails.sms'), $data, function ($message) use ($content) {
-            $message->from('t@techknowspace.com', 'TTS');
-            $message->to('6472027359@msg.telus.com', 'Ash')->subject('WO');
-        });
-
-        return $content;
     }
 }

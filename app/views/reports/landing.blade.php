@@ -27,7 +27,7 @@
                 <label class="radio-inline"><input type="radio" name="metrics" value="ppc"> PPC</label>
                 <label class="radio-inline"><input type="radio" name="metrics" value="both" checked='checked'> Both</label>
                 <label class="radio-inline"><input type="radio" name="chartmode" value="column"> Column</label>
-                <label class="radio-inline"><input type="radio" name="chartmode" value="line" checked='checked'> Line</label>
+                <label class="radio-inline"><input type="radio" name="chartmode" value="spline" checked='checked'> Line</label>
 
             </div>
             <div class='col-sm-4'>
@@ -321,8 +321,8 @@
             },
 
             plotOptions: {
-                line: {
-                    lineWidth: 1,
+                spline: {
+                    lineWidth: 2,
                     dataLabels: {
                         enabled: true
                     },

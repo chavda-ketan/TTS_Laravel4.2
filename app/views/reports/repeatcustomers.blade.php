@@ -32,8 +32,10 @@
     <script type="text/javascript">
         var dates = [ {{ $dates }} ];
         var total = [ {{ $total }} ];
+        var search = [ {{ $search }} ];
         var repeat = [ {{ $repeat }} ];
         var referral = [ {{ $referral }} ];
+        var error = [ {{ $error }} ];
         var revenue = [ {{ $revenue }} ];
         var spend = [ {{ $spend }} ];
 
@@ -203,7 +205,7 @@
 
             series: [{
                 name: 'Search',
-                data: total,
+                data: search,
                 dataLabels: datalabel,
                 yAxis: 0,
                 type: 'column'
@@ -218,6 +220,13 @@
                 data: referral,
                 dataLabels: datalabel,
                 color: '#40d040',
+                yAxis: 0,
+                type: 'column'
+            }, {
+                name: 'Error',
+                data: error,
+                dataLabels: datalabel,
+                color: 'red',
                 yAxis: 0,
                 type: 'column'
             }, {

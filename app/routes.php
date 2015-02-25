@@ -17,6 +17,8 @@ Route::get('/', 'HomeController@index');
 /* Twitter stuff */
 Route::get('twitter', 'TwitterController@index');
 Route::get('twitter/geodump', 'TwitterController@showLatLongForGeoSearch');
+Route::post('twitter/add', 'TwitterController@addSearchQuery');
+Route::get('twitter/delete', 'TwitterController@removeSearchQuery');
 
 /* Customer records stuff */
 Route::get('records', 'RecordsController@index');
@@ -32,8 +34,11 @@ Route::get('wmt', 'WebmasterToolsController@index');
 
 /* Customer mail stuff */
 Route::get('mail', 'MailController@index');
+Route::get('mail/test', 'MailController@testEmail');
 Route::get('mail/run', 'MailController@thankCustomers');
 Route::get('mail/print', 'MailController@listThankedCustomers');
+Route::get('mail/form', 'MailController@listForms');
+Route::get('mail/business/dump', 'MailController@getBusinessEmails');
 
 /* Send SMS Mail */
 Route::get('sms/send', 'MailController@sendSMSEmail');
@@ -46,11 +51,5 @@ Route::get('shit/range/daily', 'ShitController@showRangeDailyData');
 
 
 /* Supplier shit */
-Route::get('supplier', 'InventoryController@supplierForm');
-Route::post('supplier', 'InventoryController@addSupplier');
-
-Route::get('supplier', 'InventoryController@supplierForm');
-Route::post('supplier', 'InventoryController@addSupplier');
-
 Route::get('supplier', 'InventoryController@supplierForm');
 Route::post('supplier', 'InventoryController@addSupplier');

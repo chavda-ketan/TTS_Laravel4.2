@@ -46,8 +46,8 @@ PAGE FUNCTIONS
         /* Instantiate all the things */
         $data['trends'] = array();
 
-        $data['dates'] = $data['total'] =  $data['repeat'] = $data['referral'] =
-        $data['revenue'] = $data['spend'] = $data['chartdata'] =
+        $data['dates'] = $data['total'] =  $data['repeat'] = $data['referral'] = $data['error'] =
+        $data['revenue'] = $data['spend'] = $data['chartdata'] = $data['search'] =
         $data['trends']['search'] = $data['trends']['repeat'] = $data['trends']['referral'] = '';
 
         $days = $absoluteSearchTotal = $absoluteRepeatTotal = $absoluteReferralTotal = 0;
@@ -57,13 +57,17 @@ PAGE FUNCTIONS
             $total = count($metrics['total']['t']) + count($metrics['total']['m']);
             $repeat = count($metrics['repeat']['t']) + count($metrics['repeat']['m']);
             $referral = count($metrics['referral']['t']) + count($metrics['referral']['m']);
+            $search = count($metrics['search']['t']) + count($metrics['search']['m']);
 
             /* Work order revenue */
             $revenue = $this->getRevenueForDate($day);
             $combinedRevenue = $revenue['t']->Revenue + $revenue['m']->Revenue;
-            $dividedRevenue = round($combinedRevenue / $total, 2);
+            if ($total && $combinedRevenue) {
+                $dividedRevenue = round($combinedRevenue / $total, 2);
+            }
 
-            $search = $total - $repeat - $referral;
+            // $search = $total - $repeat - $referral;
+            $error = $total - $search - $repeat - $referral;
 
             /* Absolute totals */
             $absoluteSearchTotal = $search + $absoluteSearchTotal;
@@ -74,7 +78,7 @@ PAGE FUNCTIONS
             $adwordsPerCustomer = 0;
             $adwordsCost = $this->getAdwordsCostForDate($day);
 
-            if ($adwordsCost) {
+            if ($search) {
                 $adwordsPerCustomer = $adwordsCost / $search;
                 $adwordsPerCustomer = round($adwordsPerCustomer, 2);
             }
@@ -85,9 +89,11 @@ PAGE FUNCTIONS
             $trendReferral = round($absoluteReferralTotal / $days, 1);
 
             $data['dates'] .= "'$day', ";
-            $data['total'] .= "$search, ";
+            $data['total'] .= "$total, ";
+            $data['search'] .= "$search, ";
             $data['repeat'] .= "$repeat, ";
             $data['referral'] .= "$referral, ";
+            $data['error'] .= "$error, ";
             $data['revenue'] .= "$dividedRevenue, ";
             $data['spend'] .= "$adwordsPerCustomer, ";
 
@@ -300,6 +306,7 @@ DATE RANGE FUNCTIONS
             $rangeOutput[$date]['total'] = $this->getTotalCustomersForDay($day);
             $rangeOutput[$date]['repeat'] = $this->getRepeatCustomersForDay($day);
             $rangeOutput[$date]['referral'] = $this->getReferralCustomersForDay($day);
+            $rangeOutput[$date]['search'] = $this->getSearchCustomersForDay($day);
         }
 
         return $rangeOutput;
@@ -339,6 +346,13 @@ DATE RANGE FUNCTIONS
         return $queryResults;
     }
 
+    protected function getSearchCustomersForMonth($month, $year)
+    {
+        $dates = $this->monthDateRange($month, $year);
+        $queryResults = $this->referralCustomerQueryRange($dates['first'], $dates['last']);
+        return $queryResults;
+    }
+
     /* Day */
     protected function getTotalCustomersForDay($day)
     {
@@ -361,6 +375,14 @@ DATE RANGE FUNCTIONS
         $start = $day->format("Y-m-d 00:00:00.000");
         $end = $day->format("Y-m-d 23:59:59.000");
         $queryResults = $this->referralCustomerQueryRange($start, $end);
+        return $queryResults;
+    }
+
+    protected function getSearchCustomersForDay($day)
+    {
+        $start = $day->format("Y-m-d 00:00:00.000");
+        $end = $day->format("Y-m-d 23:59:59.000");
+        $queryResults = $this->searchCustomerQueryRange($start, $end);
         return $queryResults;
     }
 
@@ -470,6 +492,40 @@ DATABASE QUERIES - REPEATS AND ADWORDS REPORT
         return $results;
     }
 
+    protected function searchCustomerQueryRange($startDate, $endDate)
+    {
+        $query = "SELECT DISTINCT CustomerID FROM [Order]
+                WHERE CustomerID IN
+                (
+                        SELECT CustomerID FROM [Order]
+                        WHERE Time >= '$startDate'
+                        AND Time <= '$endDate'
+                )
+                AND ID IN
+                (
+                    SELECT OrderHistory.OrderID FROM OrderHistory
+                )
+                AND ID IN
+                (
+                    SELECT OrderID From OrderEntry WHERE Comment LIKE '%CSRH%'
+                )
+                AND ID NOT IN
+                (
+                    SELECT OrderEntryID FROM OrderRework
+                )
+                AND Time >= '$startDate'
+                AND Time <= '$endDate'
+                ORDER BY CustomerID";
+
+        $results['m'] = DB::connection('mssql-squareone')->select($query);
+        $results['t'] = DB::connection('mssql-toronto')->select($query);
+        // $results['t'] = array();
+
+        $results = $this->addLocation($results);
+
+        return $results;
+    }
+
     protected function getRevenueForDate($date)
     {
         $services = '3133, 3134, 3033, 3203, 3197, 3195, 3167, 3168, 3141, 3135,
@@ -517,7 +573,7 @@ DATABASE - LANDING PAGES
     {
         $query = "SELECT SUM(organic) AS organic,
                   SUM(cpc) AS cpc
-                  FROM google_analytics_landing_cache
+                  FROM google_analytics_page_cache
                   WHERE category = '$category'
                   AND date = '$date'";
 
@@ -538,7 +594,7 @@ DATABASE - LANDING PAGES
     {
         $query = "SELECT SUM(organic) AS organic,
                   SUM(cpc) AS cpc
-                  FROM google_analytics_landing_cache
+                  FROM google_analytics_page_cache
                   WHERE brand = '$brand'
                   AND date = '$date'";
 
@@ -559,7 +615,7 @@ DATABASE - LANDING PAGES
     {
         $query = "SELECT SUM(organic) AS organic,
                   SUM(cpc) AS cpc
-                  FROM google_analytics_landing_cache
+                  FROM google_analytics_page_cache
                   WHERE type = '$type'
                   AND date = '$date'";
 
@@ -580,7 +636,7 @@ DATABASE - LANDING PAGES
     {
         $query = "SELECT SUM(organic) AS organic,
                   SUM(cpc) AS cpc
-                  FROM google_analytics_landing_cache
+                  FROM google_analytics_page_cache
                   WHERE type = '$type'
                   AND brand = '$brand'
                   AND date = '$date'";

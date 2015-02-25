@@ -2,54 +2,91 @@
 
 class TwitterController extends BaseController {
 
-	public function index() {
-		$mCoords = '43.589045,-79.644119,20km';
-		$tCoords = '43.652527,-79.381961,20km';
+    public function index() {
+        $data['content'] = $this->doTwitterSearch();
 
-		$query['q'] = 'broken phone OR laptop';
-		$query['geocode'] = $mCoords;
+        return View::make('twitter.tweets', $data);
+    }
 
-		$searchResults = Twitter::getSearch($query);
+    public function doTwitterSearch() {
+        $mCoords = '43.589045,-79.644119,50km';
+        $tCoords = '43.652527,-79.381961,50km';
+        $searchResultsString = '';
+        $resultsArray = [];
+        $url = urlencode('http://techknowspace.com/contact-us/contact-info/');
 
-		$searchResultsString = '<pre>';
+        $queries = $this->getSearchQueries();
 
-		foreach ($searchResults->statuses as $result) {
-			$userFullName = $result->user->name;
-			$userHandle = $result->user->screen_name;
-			$userLocation = $result->user->location;
+        foreach ($queries as $query) {
+            $qid = $query->id;
+            $request['q'] = $query->query;
+            $request['geocode'] = $mCoords;
 
-			$tweetText = $result->text;
-			$tweetDate = $result->created_at;
+            $searchResults = Twitter::getSearch($request);
 
-			$searchResultsString .= "@$userHandle - $userLocation - $tweetDate - $tweetText <br>";
-		}
+            $searchResultsString .= '<pre class="twitterquery"><h2>'.$request['q'].' - <a href="/twitter/delete?id='.$qid.'">x</a></h2>';
 
-		$searchResultsString .= '</pre>';
+            foreach ($searchResults->statuses as $result) {
+                $userFullName = $result->user->name;
+                $userHandle = $result->user->screen_name;
 
-		return $searchResultsString;
-	}
+                $id = $result->id;
+                $tweetText = $result->text;
+                $tweetDate = $result->created_at;
 
-	public function doTwitterSearch() {
+                $searchResultsString .= "<p>$tweetDate - @$userHandle - $tweetText - ";
+                $searchResultsString .= "<a class='twitter-reply-button'
+                                          data-count='none'
+                                          href='https://twitter.com/intent/tweet?in_reply_to=$id&url=$url'>Tweet to @$userHandle</a></p>";
+            }
 
-	}
+            $searchResultsString .= '</pre>';
+        }
 
-	public function showLatLongForGeoSearch() {
-		$torontoGeocode = $this->getGeocodeForLocation('Toronto');
-		$mississaugaGeocode = $this->getGeocodeForLocation('Mississauga');
 
-		$mergedResults['toronto'] = $torontoGeocode;
-		$mergedResults['mississauga'] = $mississaugaGeocode;
+        return $searchResultsString;
+    }
 
-		return dd($mergedResults);
-	}
+    public function showLatLongForGeoSearch() {
+        $torontoGeocode = $this->getGeocodeForLocation('Toronto');
+        $mississaugaGeocode = $this->getGeocodeForLocation('Mississauga');
 
-	public function getGeocodeForLocation($city) {
-		$query['query'] = $city;
-		$query['granularity'] = 'city';
+        $mergedResults['toronto'] = $torontoGeocode;
+        $mergedResults['mississauga'] = $mississaugaGeocode;
 
-		$geoSearchResults = Twitter::getGeoSearch($query);
+        return dd($mergedResults);
+    }
 
-		return $geoSearchResults;
-	}
+    public function addSearchQuery(){
+        $query = Input::get('query');
+
+        DB::connection('mysql')->insert('INSERT INTO twitter_queries (query)
+                                         VALUES (?)', array($query));
+
+        return $this->index();
+    }
+
+    public function removeSearchQuery(){
+        $diarrhea = Input::get('id');
+
+        DB::connection('mysql')->delete('DELETE FROM twitter_queries
+                                         WHERE id = ?', array($diarrhea));
+
+        return $this->index();
+    }
+
+    public function getSearchQueries(){
+        $queries = DB::connection('mysql')->table('twitter_queries')->get();
+        return $queries;
+    }
+
+    public function getGeocodeForLocation($city) {
+        $query['query'] = $city;
+        $query['granularity'] = 'city';
+
+        $geoSearchResults = Twitter::getGeoSearch($query);
+
+        return $geoSearchResults;
+    }
 
 }
