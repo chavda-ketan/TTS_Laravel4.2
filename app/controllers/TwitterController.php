@@ -26,23 +26,24 @@ class TwitterController extends BaseController {
 
             $searchResultsString .= '<pre class="twitterquery"><h2>'.$request['q'].' - <a href="/twitter/delete?id='.$qid.'">x</a></h2>';
 
-            foreach ($searchResults->statuses as $result) {
-                $userFullName = $result->user->name;
-                $userHandle = $result->user->screen_name;
+            if (isset($searchResults->statuses)) {
+                foreach ($searchResults->statuses as $result) {
+                    $userFullName = $result->user->name;
+                    $userHandle = $result->user->screen_name;
 
-                $id = $result->id;
-                $tweetText = $result->text;
-                $tweetDate = $result->created_at;
+                    $id = $result->id;
+                    $tweetText = $result->text;
+                    $tweetDate = $result->created_at;
 
-                $searchResultsString .= "<p>$tweetDate - @$userHandle - $tweetText - ";
-                $searchResultsString .= "<a class='twitter-reply-button'
-                                          data-count='none'
-                                          href='https://twitter.com/intent/tweet?in_reply_to=$id&url=$url'>Tweet to @$userHandle</a></p>";
+                    $searchResultsString .= "<p>$tweetDate - @$userHandle - $tweetText - ";
+                    $searchResultsString .= "<a class='twitter-reply-button'
+                                              data-count='none'
+                                              href='https://twitter.com/intent/tweet?in_reply_to=$id&url=$url'>Tweet to @$userHandle</a></p>";
+                }
             }
 
             $searchResultsString .= '</pre>';
         }
-
 
         return $searchResultsString;
     }

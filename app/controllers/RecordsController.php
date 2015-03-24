@@ -23,6 +23,38 @@ class RecordsController extends BaseController
 PAGE FUNCTIONS
  */
 
+    public function showDeltaReport()
+    {
+        $data['seo'] = $data['ppc'] = '';
+
+        $dates = $this->getDelta();
+
+        foreach ($dates as $day) {
+            $seo = $day->organic;
+            $ppc = $day->cpc;
+
+            if ($seo > $ppc) {
+                $seo = $seo - $ppc;
+                $ppc = 0;
+            } elseif ($ppc > $seo) {
+                $ppc = $ppc - $seo;
+                $seo = 0;
+            } elseif ($ppc == $seo) {
+                $ppc = $seo = 0;
+            }
+
+            $date = $day->date;
+            $utcexplode = explode('-', $date);
+            $utcexplode[1]--;
+            $utc = "Date.UTC($utcexplode[0],$utcexplode[1],$utcexplode[2])";
+
+            $data['seo'] .= "[$utc, $seo],";
+            $data['ppc'] .= "[$utc, $ppc],";
+        }
+
+        return View::make('reports.delta', $data);
+    }
+
     /**
      * The repeat customer and adwords spend report
      */
@@ -66,8 +98,9 @@ PAGE FUNCTIONS
                 $dividedRevenue = round($combinedRevenue / $total, 2);
             }
 
-            // $search = $total - $repeat - $referral;
-            $error = $total - $search - $repeat - $referral;
+            $search = $total - $repeat - $referral;
+            $error = 0;
+            // $error = $total - $search - $repeat - $referral;
 
             /* Absolute totals */
             $absoluteSearchTotal = $search + $absoluteSearchTotal;
@@ -614,7 +647,7 @@ DATABASE - LANDING PAGES
     protected function getLandingPageMetricsForDayType($type, $date)
     {
         $query = "SELECT SUM(organic) AS organic,
-                  SUM(cpc) AS cpc
+                         SUM(cpc) AS cpc
                   FROM google_analytics_page_cache
                   WHERE type = '$type'
                   AND date = '$date'";
@@ -635,7 +668,7 @@ DATABASE - LANDING PAGES
     protected function getLandingPageMetricsForDayTypeBrand($type, $brand, $date)
     {
         $query = "SELECT SUM(organic) AS organic,
-                  SUM(cpc) AS cpc
+                         SUM(cpc) AS cpc
                   FROM google_analytics_page_cache
                   WHERE type = '$type'
                   AND brand = '$brand'
@@ -653,6 +686,23 @@ DATABASE - LANDING PAGES
 
         return $return;
     }
+
+
+    protected function getDelta()
+    {
+        $query = 'SELECT UNIX_TIMESTAMP(date) AS `utc`,
+                         organic,
+                         cpc,
+                         referral,
+                         none,
+                         date
+                  FROM google_analytics_cache ORDER BY date ASC';
+
+        $result = DB::connection('mysql')->select($query);
+
+        return $result;
+    }
+
 
 /**
 UTILITY FUNCTIONS
@@ -677,5 +727,44 @@ UTILITY FUNCTIONS
     {
         $res = round(($val1 / $val2) * 100, $precision);
         return $res;
+    }
+
+/**
+CUSTOMER LOOKUP
+ */
+
+    public function getOrderStatuses()
+    {
+        $query = 'SELECT * FROM OrderStatus';
+        $results = DB::connection('mssql-squareone')->select($query);
+        $status = [];
+
+        foreach ($results as $result) {
+            $id = $result->ID;
+            $name = $result->Name;
+            $status[$id] = $name;
+        }
+
+        return $status;
+    }
+
+    public function customerLookup()
+    {
+        $number = Input::get('number');
+
+        $query = "SELECT [Order].Time, OrderEntry.LastUpdated, OrderStatus.Name, OrderEntry.Description, OrderEntry.Comment
+                  FROM [Order], OrderEntry, Customer, OrderManagement, OrderStatus
+                  WHERE [Order].CustomerID = Customer.ID
+                  AND OrderEntry.OrderID = [Order].ID
+                  AND OrderManagement.OrderEntryID = OrderEntry.ID
+                  AND OrderStatus.ID = OrderManagement.StatusID
+                  AND REPLACE(REPLACE(Customer.PhoneNumber,' ',''),'-','') = '$number'";
+
+        $results['m'] = DB::connection('mssql-squareone')->select($query);
+        $results['t'] = DB::connection('mssql-toronto')->select($query);
+
+        $data['records'] = array_merge($results['m'],$results['t']);
+
+        return View::make('records.customerlookup', $data);
     }
 }

@@ -24,10 +24,15 @@ Route::get('twitter/delete', 'TwitterController@removeSearchQuery');
 Route::get('records', 'RecordsController@index');
 Route::get('records/repeats', 'RecordsController@showRepeatCustomerReport');
 Route::get('records/repeats/debug', 'RecordsController@debug');
+Route::get('records/repeats/debug', 'RecordsController@debug');
+Route::get('lookup', 'RecordsController@customerLookup');
 
 /* Landing page records */
 Route::get('records/landing', 'RecordsController@showLandingPageReport');
 Route::post('records/landing', 'RecordsController@showLandingPageReport');
+
+/* Delta report */
+Route::get('records/delta', 'RecordsController@showDeltaReport');
 
 /* Webmaster Tools stuff */
 Route::get('wmt', 'WebmasterToolsController@index');
