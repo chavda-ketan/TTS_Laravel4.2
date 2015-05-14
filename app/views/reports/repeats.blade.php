@@ -4,29 +4,42 @@
 @stop
 
 @section('content')
-    <div class="row" style="margin-top:20px;">
 
-        @if(isset($showpicker))
+
+
+    <form role="form" action="repeats" id="datepicker-form">
+
+        <div class="row" style="margin-top:20px;">
             <div class='col-sm-4'>
-                <form role="form" action="repeats" id="datepicker-form">
-                    <div class="form-group">
-                        <div class="input-daterange input-group" id="datepicker">
-                            <input type="text" class="input-sm form-control" name="start" value='{{ $start }}'>
-                            <span class="input-group-addon">to</span>
-                            <input type="text" class="input-sm form-control" name="end" value='{{ date("Y-m-d") }}'>
-                        </div>
+                <div class="form-group">
+                    <div class="input-daterange input-group" id="datepicker">
+                        <input type="text" class="input form-control" name="start" value='{{ $start }}'>
+                        <span class="input-group-addon">to</span>
+                        <input type="text" class="input form-control" name="end" value='{{ date("Y-m-d") }}'>
                     </div>
-                    <button type="submit" class="btn btn-default">Submit</button>
-                </form>
-            </div>
-        @endif
 
+                </div>
+            </div>
+            <div class='col-sm-4'>
+                <label class="radio-inline"><input type="radio" name="metrics" value="csrh" checked="checked"> CSRH</label>
+                <label class="radio-inline"><input type="radio" name="metrics" value="crep"> CREP</label>
+                <label class="radio-inline"><input type="radio" name="metrics" value="cref"> CREF</label>
+                <label class="radio-inline"><input type="radio" name="metrics" value="all"> All</label>
+
+            </div>
+            <div class='col-sm-4'>
+
+                <button type="submit" class="btn btn-primary" style="margin-left: 0px;">Submit</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="row" style="margin-top:20px;">
         <div class='col-sm-12'>
             <div id='graph' style="width: 100%; height: 800px;">
 
             </div>
         </div>
-
     </div>
 
     <script type="text/javascript">
@@ -51,13 +64,13 @@
                     fontWeight: 'bold',
                     textShadow: '0 -2px 0px black'
                 },
-                formatter: function() {
-                    if (this.y != 0) {
-                      return Math.round(this.percentage)+'';
-                    } else {
-                      return null;
-                    }
-                }
+                // formatter: function() {
+                //     if (this.y != 0) {
+                //       return Math.round(this.percentage)+'';
+                //     } else {
+                //       return null;
+                //     }
+                // }
             }
 
         var datalabelAvg = {
@@ -113,7 +126,7 @@
                     enableMouseTracking: true
                 },
                 column: {
-                    stacking: 'percent',
+                    stacking: 'normal',
                     pointPadding: 0,
                     groupPadding: 0,
                 },
@@ -137,15 +150,15 @@
                 title: {
                     text: 'Ratio'
                 },
-                height: '60%',
-                top: '40%'
+                height: '80%',
+                top: '20%'
 
             },{
                 title: {
                     text: 'Avg Spend'
                 },
                 height: '20%',
-                top: '20%',
+                top: '0%',
                 // endOnTick: false,
                 offset: 0,
                 plotLines : [{
@@ -157,17 +170,18 @@
                         text : 'Aggregate Average Spend - ${{ $avg["adwords"] }}'
                     }
                 }]
-            },{
-                title: {
-                    text: 'Trending Avg'
-                },
-                endOnTick: false,
-                height: '18%',
-                top: '0%',
-                offset: 0,
-                min: 0
-
             }],
+            // },{
+            //     title: {
+            //         text: 'Trending Avg'
+            //     },
+            //     endOnTick: false,
+            //     height: '18%',
+            //     top: '0%',
+            //     offset: 0,
+            //     min: 0
+
+            // }],
 
             tooltip: {
                 shared: true,
@@ -201,19 +215,27 @@
                 // pointFormat: '<span style="color:black">{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>',
             },
 
-            series: [{
+            series: [
+            @if($mode === 'csrh' || $mode === 'all')
+            {
                 name: 'Search',
                 data: search,
                 dataLabels: datalabel,
                 yAxis: 0,
                 type: 'column'
-            }, {
+            },
+            @endif
+            @if($mode === 'crep' || $mode === 'all')
+             {
                 name: 'Repeat',
                 data: repeat,
                 dataLabels: datalabel,
                 yAxis: 0,
                 type: 'column'
-            }, {
+            },
+            @endif
+            @if($mode === 'cref' || $mode === 'all')
+             {
                 name: 'Referral',
                 data: referral,
                 dataLabels: datalabel,
@@ -221,6 +243,7 @@
                 yAxis: 0,
                 type: 'column'
             },
+            @endif
             // {
             //     name: 'Error',
             //     data: error,
@@ -248,14 +271,14 @@
                 data: repeattrend,
                 dataLabels: datalabelTrends,
                 // color: 'red',
-                yAxis: 2,
+                yAxis: 0,
                 type: 'line',
             }, {
                 name: 'Referral Avg',
                 data: referraltrend,
                 dataLabels: datalabelTrends,
                 // color: 'red',
-                yAxis: 2,
+                yAxis: 0,
                 type: 'line',
             },
 

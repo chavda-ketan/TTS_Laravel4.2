@@ -62,9 +62,11 @@ PAGE FUNCTIONS
     {
         $start = Input::get('start');
         $end = Input::get('end');
+        $mode = Input::get('metrics');
 
         $data['start'] = $start ? $start : date('Y-m-d', strtotime("30 days ago"));
         $data['end'] = $end ? $end : date('Y-m-d');
+        $data['mode'] = $mode ? $mode : "csrh";
 
         $end = new DateTime($data['end']);
         $today = new DateTime();
@@ -117,7 +119,7 @@ PAGE FUNCTIONS
             }
 
             /* Trending averages */
-            $trendSearch = round($absoluteSearchTotal / $days, 1);
+            $trendSearch = $this->searchRunningAverage($day);
             $trendRepeat = round($absoluteRepeatTotal / $days, 1);
             $trendReferral = round($absoluteReferralTotal / $days, 1);
 
@@ -141,7 +143,7 @@ PAGE FUNCTIONS
 
         $data['showpicker'] = 1;
 
-        return View::make('reports.repeatcustomers', $data);
+        return View::make('reports.repeats', $data);
     }
 
     /**
@@ -199,9 +201,16 @@ PAGE FUNCTIONS
         if (Input::get('promotions')) { $data['metrics']['promotions'] = ''; }
         if (Input::get('locations')) { $data['metrics']['locations'] = ''; }
 
+        # aggregates
+        if (Input::get('smartphones-all')) { $data['metrics']['smartphones'] = ''; }
+        if (Input::get('tablets-all')) { $data['metrics']['tablets'] = ''; }
+        if (Input::get('laptops-all')) { $data['metrics']['laptops'] = ''; }
+
         foreach ($data['metrics'] as $key => $value) {
             $data['metrics'][$key]['seo'] = '';
             $data['metrics'][$key]['ppc'] = '';
+            $data['metrics'][$key]['avgseo'] = '';
+            $data['metrics'][$key]['avgppc'] = '';
         }
 
         $data['start'] = $start ? $start : date('Y-m-d', strtotime("30 days ago"));
@@ -223,31 +232,48 @@ PAGE FUNCTIONS
 
         // Populate the data
 
+        // var_dump(Input::all());
+
+        $types = [];
+
+
         foreach ($period as $day) {
             $date = $day->format("Y-m-d");
             $data['dates'] .= "'$date', ";
 
             foreach ($data['metrics'] as $key => $value) {
                 if (Input::get('smartphones')) {
-                    $smartphones = $this->getLandingPageMetricsForDayTypeBrand('smartphones', $key, $date);
+                    $type = 'smartphones';
+                    $counts = $this->getLandingPageMetricsForDayTypeBrand($type, $key, $date);
+                    $averages = $this->getLandingPageRunningAverage($type, $key, $date);
                     $keyname = $key;
 
-                    $data['metrics'][$keyname]['seo'] .= $smartphones['seo'].',';
-                    $data['metrics'][$keyname]['ppc'] .= $smartphones['ppc'].',';
+                    $data['metrics'][$keyname]['seo'] .= $counts['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $counts['ppc'].',';
+                    $data['metrics'][$keyname]['avgseo'] .= $averages['avgseo'].',';
+                    $data['metrics'][$keyname]['avgppc'] .= $averages['avgppc'].',';
                 }
                 if (Input::get('laptops')) {
-                    $laptops = $this->getLandingPageMetricsForDayTypeBrand('laptops', $key, $date);
+                    $type = 'laptops';
+                    $counts = $this->getLandingPageMetricsForDayTypeBrand($type, $key, $date);
+                    $averages = $this->getLandingPageRunningAverage($type, $key, $date);
                     $keyname = $key;
 
-                    $data['metrics'][$keyname]['seo'] .= $laptops['seo'].',';
-                    $data['metrics'][$keyname]['ppc'] .= $laptops['ppc'].',';
+                    $data['metrics'][$keyname]['seo'] .= $counts['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $counts['ppc'].',';
+                    $data['metrics'][$keyname]['avgseo'] .= $averages['avgseo'].',';
+                    $data['metrics'][$keyname]['avgppc'] .= $averages['avgppc'].',';
                 }
                 if (Input::get('tablets')) {
-                    $tablets = $this->getLandingPageMetricsForDayTypeBrand('tablets', $key, $date);
+                    $type = 'tablets';
+                    $counts = $this->getLandingPageMetricsForDayTypeBrand($type, $key, $date);
+                    $averages = $this->getLandingPageRunningAverage($type, $key, $date);
                     $keyname = $key;
 
-                    $data['metrics'][$keyname]['seo'] .= $tablets['seo'].',';
-                    $data['metrics'][$keyname]['ppc'] .= $tablets['ppc'].',';
+                    $data['metrics'][$keyname]['seo'] .= $counts['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $counts['ppc'].',';
+                    $data['metrics'][$keyname]['avgseo'] .= $averages['avgseo'].',';
+                    $data['metrics'][$keyname]['avgppc'] .= $averages['avgppc'].',';
                 }
                 if (Input::get('home')) {
                     $home = $this->getLandingPageMetricsForDayCategory('home', $date);
@@ -285,11 +311,135 @@ PAGE FUNCTIONS
                     $data['metrics'][$keyname]['seo'] .= $playstation['seo'].',';
                     $data['metrics'][$keyname]['ppc'] .= $playstation['ppc'].',';
                 }
+
+                # Aggregates
+
+                if (Input::get('smartphones-all')) {
+                    $smartphones = $this->getLandingPageMetricsForDayType('smartphones', $date);
+                    $averages = $this->getLandingPageRunningAverageAggregate('smartphones', $date);
+                    $keyname = $key;
+
+                    $data['metrics'][$keyname]['seo'] .= $smartphones['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $smartphones['ppc'].',';
+
+                    $data['metrics'][$keyname]['avgseo'] .= $averages['avgseo'].',';
+                    $data['metrics'][$keyname]['avgppc'] .= $averages['avgppc'].',';
+
+                }
+                if (Input::get('tablets-all')) {
+                    $tablets = $this->getLandingPageMetricsForDayType('tablets', $date);
+                    $averages = $this->getLandingPageRunningAverageAggregate('tablets', $date);
+                    $keyname = $key;
+
+                    $data['metrics'][$keyname]['seo'] .= $tablets['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $tablets['ppc'].',';
+
+                    $data['metrics'][$keyname]['avgseo'] .= $averages['avgseo'].',';
+                    $data['metrics'][$keyname]['avgppc'] .= $averages['avgppc'].',';
+                }
+                if (Input::get('laptops-all')) {
+                    $laptops = $this->getLandingPageMetricsForDayType('laptops', $date);
+                    $averages = $this->getLandingPageRunningAverageAggregate('laptops', $date);
+                    $keyname = $key;
+
+                    $data['metrics'][$keyname]['seo'] .= $laptops['seo'].',';
+                    $data['metrics'][$keyname]['ppc'] .= $laptops['ppc'].',';
+
+                    $data['metrics'][$keyname]['avgseo'] .= $averages['avgseo'].',';
+                    $data['metrics'][$keyname]['avgppc'] .= $averages['avgppc'].',';
+                }
+
             }
         }
 
         return View::make('reports.landing', $data);
     }
+
+    public function showLandingPageAggregateReport()
+    {
+        $start = Input::get('start');
+        $end = Input::get('end');
+        $data['mode'] = Input::get('mode');
+        $data['chartmode'] = 'column';
+
+        $data['dates'] = '';
+        $data['metrics'] = array();
+
+        $data['metrics']['smartphones'] = '';
+        $data['metrics']['tablets'] = '';
+        $data['metrics']['laptops'] = '';
+        $data['metrics']['other'] = '';
+        $data['metrics']['all'] = '';
+
+        foreach ($data['metrics'] as $key => $value) {
+            $data['metrics'][$key]['seo'] = '';
+            $data['metrics'][$key]['ppc'] = '';
+            $data['metrics'][$key]['avgseo'] = '';
+            $data['metrics'][$key]['avgppc'] = '';
+        }
+
+        $data['start'] = $start ? $start : date('Y-m-d', strtotime("30 days ago"));
+        $data['end'] = $end ? $end : date('Y-m-d');
+
+        $today = new DateTime();
+
+        if ($end > $today) {
+            $data['end'] = date('Y-m-d');
+        }
+
+        $begin = new DateTime($data['start']);
+        $end = new DateTime($data['end']);
+
+        $interval = DateInterval::createFromDateString('1 day');
+        $period = new DatePeriod($begin, $interval, $end);
+
+        $types = [];
+
+        foreach ($period as $day) {
+            $date = $day->format("Y-m-d");
+            $data['dates'] .= "'$date', ";
+
+            $smartphones = $this->getLandingPageMetricsForDayType('smartphones', $date);
+            $averages = $this->getLandingPageRunningAverageAggregate('smartphones', $date);
+
+            $data['metrics']['smartphones']['seo'] .= $smartphones['seo'].',';
+            $data['metrics']['smartphones']['ppc'] .= $smartphones['ppc'].',';
+            $data['metrics']['smartphones']['avgseo'] .= $averages['avgseo'].',';
+            $data['metrics']['smartphones']['avgppc'] .= $averages['avgppc'].',';
+
+            $tablets = $this->getLandingPageMetricsForDayType('tablets', $date);
+            $averages = $this->getLandingPageRunningAverageAggregate('tablets', $date);
+
+            $data['metrics']['tablets']['seo'] .= $tablets['seo'].',';
+            $data['metrics']['tablets']['ppc'] .= $tablets['ppc'].',';
+            $data['metrics']['tablets']['avgseo'] .= $averages['avgseo'].',';
+            $data['metrics']['tablets']['avgppc'] .= $averages['avgppc'].',';
+
+            $laptops = $this->getLandingPageMetricsForDayType('laptops', $date);
+            $averages = $this->getLandingPageRunningAverageAggregate('laptops', $date);
+
+            $data['metrics']['laptops']['seo'] .= $laptops['seo'].',';
+            $data['metrics']['laptops']['ppc'] .= $laptops['ppc'].',';
+            $data['metrics']['laptops']['avgseo'] .= $averages['avgseo'].',';
+            $data['metrics']['laptops']['avgppc'] .= $averages['avgppc'].',';
+
+            $averages = $this->getLandingPageRunningAverageAggregateOther($date);
+
+            $data['metrics']['other']['avgseo'] .= $averages['avgseo'].',';
+            $data['metrics']['other']['avgppc'] .= $averages['avgppc'].',';
+
+            $combined = $this->getLandingPageRunningAverageAggregateAll($date);
+            $total = $this->getLandingPageAll($date);
+
+            $data['metrics']['all']['seo'] .= $total['seo'].',';
+            $data['metrics']['all']['ppc'] .= $total['ppc'].',';
+            $data['metrics']['all']['avgseo'] .= $combined['avgseo'].',';
+            $data['metrics']['all']['avgppc'] .= $combined['avgppc'].',';
+        }
+
+        return View::make('reports.aggregatelanding', $data);
+    }
+
 
 /**
 MATH FUNCTIONS
@@ -559,6 +709,15 @@ DATABASE QUERIES - REPEATS AND ADWORDS REPORT
         return $results;
     }
 
+    protected function searchRunningAverage($date)
+    {
+        $query = "SELECT SUM(total) / 30 AS avg FROM customer_daily_csrh
+                  WHERE date BETWEEN DATE_SUB('$date', INTERVAL 30 DAY) AND '$date'";
+
+        $results = DB::connection('mysql')->select($query)[0]->avg;
+        return $results;
+    }
+
     protected function getRevenueForDate($date)
     {
         $services = '3133, 3134, 3033, 3203, 3197, 3195, 3167, 3168, 3141, 3135,
@@ -604,7 +763,7 @@ DATABASE - LANDING PAGES
 
     protected function getLandingPageMetricsForDayCategory($category, $date)
     {
-        $query = "SELECT SUM(organic) AS organic,
+        $query = "SELECT (SUM(organic) + SUM(none)) AS organic,
                   SUM(cpc) AS cpc
                   FROM google_analytics_page_cache
                   WHERE category = '$category'
@@ -625,7 +784,7 @@ DATABASE - LANDING PAGES
 
     protected function getLandingPageMetricsForDayBrand($brand, $date)
     {
-        $query = "SELECT SUM(organic) AS organic,
+        $query = "SELECT (SUM(organic) + SUM(none)) AS organic,
                   SUM(cpc) AS cpc
                   FROM google_analytics_page_cache
                   WHERE brand = '$brand'
@@ -646,7 +805,7 @@ DATABASE - LANDING PAGES
 
     protected function getLandingPageMetricsForDayType($type, $date)
     {
-        $query = "SELECT SUM(organic) AS organic,
+        $query = "SELECT (SUM(organic) + SUM(none)) AS organic,
                          SUM(cpc) AS cpc
                   FROM google_analytics_page_cache
                   WHERE type = '$type'
@@ -667,10 +826,10 @@ DATABASE - LANDING PAGES
 
     protected function getLandingPageMetricsForDayTypeBrand($type, $brand, $date)
     {
-        $query = "SELECT SUM(organic) AS organic,
+        $query = "SELECT (SUM(organic) + SUM(none)) AS organic,
                          SUM(cpc) AS cpc
                   FROM google_analytics_page_cache
-                  WHERE type = '$type'
+                  WHERE (type = '$type' OR type = 'batteries')
                   AND brand = '$brand'
                   AND date = '$date'";
 
@@ -687,6 +846,79 @@ DATABASE - LANDING PAGES
         return $return;
     }
 
+    protected function getLandingPageRunningAverage($type, $brand, $date)
+    {
+        $query = "SELECT (SUM(organic) + SUM(none)) / 30 AS avgSeo, SUM(cpc) / 30 AS avgPpc
+                  FROM `google_analytics_page_cache`
+                  WHERE type = '$type'
+                  AND brand = '$brand'
+                  AND date BETWEEN DATE_SUB('$date', INTERVAL 30 DAY) AND '$date'";
+
+        $result = DB::connection('mysql')->select($query)[0];
+
+        $return['avgseo'] = $result->avgSeo;
+        $return['avgppc'] = $result->avgPpc;
+
+        return $return;
+    }
+
+    protected function getLandingPageRunningAverageAggregate($type, $date)
+    {
+        $query = "SELECT (SUM(organic) + SUM(none)) / 30 AS avgSeo,     SUM(cpc) / 30 AS avgPpc
+                  FROM `google_analytics_page_cache`
+                  WHERE type = '$type'
+                  AND date BETWEEN DATE_SUB('$date', INTERVAL 30 DAY) AND '$date'";
+
+        $result = DB::connection('mysql')->select($query)[0];
+
+        $return['avgseo'] = $result->avgSeo;
+        $return['avgppc'] = $result->avgPpc;
+
+        return $return;
+    }
+
+    protected function getLandingPageRunningAverageAggregateAll($date)
+    {
+        $query = "SELECT (SUM(organic) + SUM(none)) / 30 AS avgSeo, SUM(cpc) / 30 AS avgPpc
+                  FROM `google_analytics_page_cache`
+                  WHERE date BETWEEN DATE_SUB('$date', INTERVAL 30 DAY) AND '$date'";
+
+        $result = DB::connection('mysql')->select($query)[0];
+
+        $return['avgseo'] = $result->avgSeo;
+        $return['avgppc'] = $result->avgPpc;
+
+        return $return;
+    }
+
+    protected function getLandingPageRunningAverageAggregateOther($date)
+    {
+        $query = "SELECT (SUM(organic) + SUM(none)) / 30 AS avgSeo, SUM(cpc) / 30 AS avgPpc
+                  FROM `google_analytics_page_cache`
+                  WHERE (category = 'general' OR category = 'home' OR type = 'consoles')
+                  AND date BETWEEN DATE_SUB('$date', INTERVAL 30 DAY) AND '$date'";
+
+        $result = DB::connection('mysql')->select($query)[0];
+
+        $return['avgseo'] = $result->avgSeo;
+        $return['avgppc'] = $result->avgPpc;
+
+        return $return;
+    }
+
+    protected function getLandingPageAll($date)
+    {
+        $query = "SELECT (SUM(organic) + SUM(none)) seo, SUM(cpc) AS ppc
+                  FROM `google_analytics_page_cache`
+                  WHERE date BETWEEN DATE_SUB('$date', INTERVAL 30 DAY) AND '$date'";
+
+        $result = DB::connection('mysql')->select($query)[0];
+
+        $return['seo'] = $result->seo;
+        $return['ppc'] = $result->ppc;
+
+        return $return;
+    }
 
     protected function getDelta()
     {

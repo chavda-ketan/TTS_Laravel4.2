@@ -59,10 +59,10 @@ return array(
 
 		'mysql-godaddy' => array(
 			'driver'    => 'mysql',
-			'host'      => 'p3plcpnl0154.prod.phx3.secureserver.net',
+			'host'      => 'techknowspace.com',
 			'database'  => 'tts',
-			'username'  => 'ttsdb',
-			'password'  => 'AshTech2006',
+			'username'  => 'techknow',
+			'password'  => 'Xa148',
 			'charset'   => 'utf8',
 			'collation' => 'utf8_unicode_ci',
 			'prefix'    => '',

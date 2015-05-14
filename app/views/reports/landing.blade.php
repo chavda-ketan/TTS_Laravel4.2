@@ -6,7 +6,7 @@
 @section('content')
     <div class="row" style="margin-top:20px;">
         <div class="col-sm-12" style="margin-bottom: 20px">
-            <h2>Landing Page Metrics</h2>
+            <h2>Landing Page Metrics - <a href="aggregate" target="_blank">Trends</a></h2>
         </div>
     </div>
 
@@ -23,11 +23,11 @@
                 </div>
             </div>
             <div class='col-sm-4'>
-                <label class="radio-inline"><input type="radio" name="metrics" value="seo"> Organic</label>
+                <label class="radio-inline"><input type="radio" name="metrics" value="seo" checked="checked"> Organic</label>
                 <label class="radio-inline"><input type="radio" name="metrics" value="ppc"> PPC</label>
-                <label class="radio-inline"><input type="radio" name="metrics" value="both" checked='checked'> Both</label>
-                <label class="radio-inline"><input type="radio" name="chartmode" value="column"> Column</label>
-                <label class="radio-inline"><input type="radio" name="chartmode" value="spline" checked='checked'> Line</label>
+                <label class="radio-inline"><input type="radio" name="metrics" value="both"> Both</label>
+                <label class="radio-inline"><input type="radio" name="chartmode" value="column" checked="checked"> Column</label>
+                <label class="radio-inline"><input type="radio" name="chartmode" value="spline"> Line</label>
 
             </div>
             <div class='col-sm-4'>
@@ -217,6 +217,8 @@
 @foreach($metrics as $type => $metric)
         var {{ $type.'_seo' }} = [ {{ $metric['seo'] }} ];
         var {{ $type.'_ppc' }} = [ {{ $metric['ppc'] }} ];
+        var {{ $type.'_avgseo' }} = [ {{ $metric['avgseo'] }} ];
+        var {{ $type.'_avgppc' }} = [ {{ $metric['avgppc'] }} ];
 @endforeach
 
         var datalabel = {
@@ -371,6 +373,20 @@
                         dataLabels: datalabel,
                         type: '{{ $chartmode }}'
                     },
+                    {
+                        name: '{{ $type }} SEO Avg',
+                        data: {{ $type."_avgseo" }},
+                        // dataLabels: datalabel,
+                        type: 'line',
+                        color: 'red'
+                    },
+                    {
+                        name: '{{ $type }} PPC Avg',
+                        data: {{ $type."_avgppc" }},
+                        // dataLabels: datalabel,
+                        type: 'line',
+                        color: 'orange'
+                    },
                 @elseif($mode == 'seo')
                     {
                         name: '{{ $type }} SEO',
@@ -378,12 +394,27 @@
                         dataLabels: datalabel,
                         type: '{{ $chartmode }}'
                     },
+                    {
+                        name: '{{ $type }} SEO Avg',
+                        data: {{ $type."_avgseo" }},
+                        // dataLabels: datalabel,
+                        type: 'line',
+                        color: 'red'
+                    },
+
                 @else
                     {
                         name: '{{ $type }} PPC',
                         data: {{ $type."_ppc" }},
                         dataLabels: datalabel,
                         type: '{{ $chartmode }}'
+                    },
+                    {
+                        name: '{{ $type }} PPC Avg',
+                        data: {{ $type."_avgppc" }},
+                        // dataLabels: datalabel,
+                        type: 'line',
+                        color: 'orange'
                     },
                 @endif
             @endforeach

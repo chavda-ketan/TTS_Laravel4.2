@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" moznomarginboxes mozdisallowselectionprint>
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -38,7 +38,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="index.html">TechKnow Space Internal v2</a>
+                <a class="navbar-brand" href="index.html">TechKnow Space</a>
             </div>
         </nav>
 
@@ -53,12 +53,15 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
     <script src="/js/bootstrap-datepicker.js"></script>
-    <script src="/js/jquery.tablesorter.min.js"></script>
+    <script src="/js/jquery.tablesorter.js"></script>
+    <script src="/js/jquery.tablesorter.widgets.js"></script>
 
     <script src="/js/plugins/metisMenu/metisMenu.min.js"></script>
     <script src="/js/plugins/morris/raphael.min.js"></script>
 
     <script src="/js/sb-admin-2.js"></script>
+
+    <script src="/js/print.js"></script>
 
     @yield('scripts')
 </body>

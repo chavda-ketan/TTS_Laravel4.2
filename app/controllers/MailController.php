@@ -48,7 +48,7 @@ class MailController extends BaseController
     public function testEmail()
     {
         // $this->sendThankYouEmail('Aubrey','acottle@taimalabs.com','iPhone','m',rand(99999,999999));
-        $this->sendThankYouEmail('Aubrey', 'kirtaner@gmail.com', 'iPhone', 'm', rand(99999, 999999));
+        $this->sendThankYouEmail('Jason', 'connectedideas@hotmail.com', 'iPhone', 'm', rand(99999, 999999));
         return 'Sent';
     }
 
@@ -205,14 +205,14 @@ class MailController extends BaseController
     private function loadCustomersToThank()
     {
         // $date = date("Y-m-d", strtotime("-150 days"));
-        $date = date("Y-m-d", strtotime("-60 days"));
+        $date = date("Y-m-d", strtotime("-0 days"));
         $date .= ' 00:00:00';
         // $date2 = date("Y-m-d", strtotime("-1 days"));
         $date2 = date("Y-m-d", strtotime("+2"));
         $date2 .= ' 00:00:00';
 
-        $sql = "SELECT OrderID, ItemID, OrderEntry.\"Comment\", Customer.FirstName AS FirstName,
-            Customer.EmailAddress AS EmailAddress FROM OrderEntry, \"Order\",
+        $sql = "SELECT OrderID, ItemID, OrderEntry.[Comment], Customer.FirstName AS FirstName,
+            Customer.EmailAddress AS EmailAddress FROM OrderEntry, [Order],
             Customer WHERE \"Order\".Closed=1 AND \"Order\".Total NOT IN ('28.25','45.20')
             AND \"Order\".Total>0 AND Customer.ID=\"Order\".CustomerID
             AND OrderEntry.OrderID=\"Order\".ID AND OrderEntry.Price > 0 AND OrderEntry.LastUpdated > '$date'
