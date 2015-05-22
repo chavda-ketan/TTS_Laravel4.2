@@ -59,7 +59,18 @@ return array(
 
 		'mysql-godaddy' => array(
 			'driver'    => 'mysql',
-			'host'      => 'techknowspace.com',
+			'host'      => 'p3plcpnl0154.prod.phx3.secureserver.net',
+			'database'  => 'tts',
+			'username'  => 'aubrey',
+			'password'  => 'shitc0ck',
+			'charset'   => 'utf8',
+			'collation' => 'utf8_unicode_ci',
+			'prefix'    => '',
+		),
+
+		'mysql-cac' => array(
+			'driver'    => 'mysql',
+			'host'      => 'cac.techknowspace.com',
 			'database'  => 'tts',
 			'username'  => 'techknow',
 			'password'  => 'Xa148',

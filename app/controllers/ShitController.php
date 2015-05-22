@@ -3,7 +3,7 @@
 class ShitController extends BaseController
 {
 
-    // FUCK YOU
+
     public function tonerCartridges()
     {
         $itemQuery = 'SELECT Description, ItemLookupCode, ExtendedDescription FROM Item
@@ -467,6 +467,115 @@ class ShitController extends BaseController
 
             DB::connection('mysql-godaddy')->insert('REPLACE INTO web_category_page (name, menu_name, page_name, service, url, parent, menu, description, keywords)
                                              VALUES (?,?,?,?,?,?,?,?,?)', array($name, $menu_name, $page_name, $service, $url, $parent, $menu, $description, $keywords));
+
+            print("$i - ".$item->fullname."\n");
+
+            ob_flush();
+            flush();
+        }
+
+        $ret = $items;
+        return var_dump($ret);
+    }
+
+
+
+
+    public function batterySeries()
+    {
+
+        $itemQuery = 'SELECT DISTINCT brand, series FROM models WHERE series != ""';
+
+        $items = DB::connection('mysql-godaddy')->select($itemQuery);
+
+        foreach ($items as $item) {
+            $name = $item->brand.' '.$item->series.' Laptop Battery Toronto & Mississauga';
+            $page_name = $item->brand.' '.$item->series.' Laptop Battery Toronto & Mississauga';
+            $menu_name = $item->series;
+            $service = 'Battery for '.$item->series;
+            $url = str_replace(' ', '-', trim(strtolower($item->brand.'-'.$item->series)));
+            $url = urlencode($url).'-battery';
+            $menu = 1;
+            $description = $item->brand.' '.$item->series.' laptop batteries in stock - Toronto: nr Rogers Centre & Mississauga: across from Square One';
+            $keywords = $item->brand.' '.$item->series.' Laptop Replacement Battery';
+
+            if ($item->brand == 'Apple') {
+                $parent = 363;
+            }
+            // elseif ($item->brand == 'eMachines') {
+            //     $parent = 2728;
+            // }
+            // elseif ($item->brand == 'Fujitsu') {
+            //     $parent = 2727;
+            // }
+            elseif ($item->brand == 'Lenovo') {
+                $parent = 559;
+            }
+            elseif ($item->brand == 'Toshiba') {
+                $parent = 370;
+            }
+            elseif ($item->brand == 'Sony') {
+                $parent = 521;
+            }
+            // elseif ($item->brand == 'LG') {
+            //     $parent = 2723;
+            // }
+            elseif ($item->brand == 'Samsung') {
+                $parent = 369;
+            }
+            elseif ($item->brand == 'Gateway') {
+                $parent = 492;
+            }
+            elseif ($item->brand == 'HP') {
+                $parent = 491;
+            }
+            elseif ($item->brand == 'Dell') {
+                $parent = 366;
+            }
+            elseif ($item->brand == 'Asus') {
+                $parent = 364;
+            }
+            elseif ($item->brand == 'Acer') {
+                $parent = 362;
+            }
+
+            DB::connection('mysql-godaddy')->insert('REPLACE INTO web_category_page (name, menu_name, page_name, service, url, parent, menu, description, keywords)
+                                             VALUES (?,?,?,?,?,?,?,?,?)', array($name, $menu_name, $page_name, $service, $url, $parent, $menu, $description, $keywords));
+
+        }
+
+        $ret = $items;
+        return var_dump($ret);
+    }
+
+    public function batteryModels()
+    {
+        $itemQuery = 'SELECT DISTINCT brand, series, fullname, model FROM models WHERE series != ""';
+
+        $items = DB::connection('mysql-godaddy')->select($itemQuery);
+
+        $i = 0;
+
+        foreach ($items as $item) {
+            $i++;
+            $series = $item->series;
+
+            $name = $item->brand.' '.$item->fullname.' Laptop Battery Toronto & Mississauga';
+            $page_name = $item->brand.' '.$item->fullname.' Laptop Battery Toronto & Mississauga';
+            $menu_name = $item->model;
+            $service = 'Battery for '.$item->brand;
+            $model = $item->model;
+            $url = str_replace(' ', '-', trim(strtolower($item->model)));
+            $url = urlencode($url).'-battery';
+            $menu = 1;
+            $description = $item->brand.' '.$item->fullname.' laptop batteries in stock - Toronto: nr Rogers Centre & Mississauga: across from Square One';
+            $keywords = $item->brand.' '.$item->fullname.' Laptop Replacement Battery';
+
+            $subquery = "SELECT id FROM web_category_page WHERE menu_name = '$series' AND service LIKE '%Battery%'";
+            $parent = DB::connection('mysql-godaddy')->select($subquery)[0]->id;
+
+            DB::connection('mysql-godaddy')->insert('REPLACE INTO web_category_page (name, menu_name, page_name, service, url, parent, menu, description, keywords, model)
+                                             VALUES (?,?,?,?,?,?,?,?,?,?)', array($name, $menu_name, $page_name, $service, $url, $parent, $menu, $description, $keywords, $model));
 
             print("$i - ".$item->fullname."\n");
 

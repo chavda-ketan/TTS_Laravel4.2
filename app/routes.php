@@ -91,3 +91,6 @@ Route::get('noseries3', 'ShitController@enclosedPoolArea');
 
 Route::get('phonebattery', 'ShitController@phoneBatteries');
 Route::get('toners', 'ShitController@tonerCartridges');
+
+Route::get('laptopbattery', 'ShitController@batterySeries');
+Route::get('laptopbattery2', 'ShitController@batteryModels');

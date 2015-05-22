@@ -76,13 +76,13 @@
     <table class="table table-bordered" id="searchtable">
           <thead>
             <tr>
-              <th>#</th>
+              <th class="col-md-1">#</th>
               <th>SKU</th>
               <th>Item Name</th>
-              <th class="sender">Qty (S)</th>
-              <th class="receiver">Qty (R)</th>
-              <th>Qty (Tfer)</th>
-              <th>Action</th>
+              <th class="sender col-md-1">Qty (S)</th>
+              <th class="receiver col-md-1">Qty (R)</th>
+              <th class="col-md-1">Qty (Tfer)</th>
+              <th class="col-md-1">Action</th>
             </tr>
           </thead>
           <tbody id="results">
@@ -99,13 +99,13 @@
     <table id="printable" class="table table-bordered">
           <thead>
             <tr>
-              <th>#</th>
+              <th class="col-md-1">#</th>
               <th>SKU</th>
               <th>Item Name</th>
-              <th class="sender">Qty (S)</th>
-              <th class="receiver">Qty (R)</th>
-              <th>Qty (Tfer)</th>
-              <th class="noprint">Action</th>
+              <th class="sender col-md-1">Qty (S)</th>
+              <th class="receiver col-md-1">Qty (R)</th>
+              <th class="col-md-1">Qty (Tfer)</th>
+              <th class="noprint col-md-1">Action</th>
             </tr>
           </thead>
           <tbody id="transfer">
@@ -210,6 +210,51 @@ $(function(){
         transferTableIndex();
     });
 
+    $("#addall").on('click', function(){
+        $('#results tr').each( function() {
+            var sku = $(this).data('sku');
+            //$('#'+sku)[0].checkValidity();
+
+            var array = [];
+            var headers = [];
+            var row = '';
+
+            $('#searchtable th').each(function(index, item) {
+                headers[index] = $(item).text();
+            });
+
+            $(this).parent().parent().has('td').each(function() {
+                var arrayItem = {};
+                $('td', $(this)).each(function(index, item) {
+                    if (headers[index] === "Qty (Tfer)") {
+                        arrayItem[headers[index]] = $(item).children('input').val();
+                    } else {
+                        arrayItem[headers[index]] = $(item).text();
+                    };
+                });
+                array.push(arrayItem);
+            });
+
+            var sender = $("select#from").find(':selected').attr('value');
+            var receiver = $("select#to").find(':selected').attr('value');
+            var sendkey = "Qty ("+sender+")";
+            var recvkey = "Qty ("+receiver+")";
+
+            row += '<tr>'
+            row += '<td>' + 0 + '</td>'
+            row += '<td>' + array[0]["SKU"] + '</td>'
+            row += '<td>' + array[0]["Item Name"] + '</td>'
+            row += '<td>' + array[0][sendkey] + '</td>'
+            row += '<td>' + array[0][recvkey] + '</td>'
+            row += '<td>' + array[0]["Qty (Tfer)"] + '</td>'
+            row += '<td class="noprint"><button class="delbutton btn btn-danger btn-sm" data-sku="' + array[0]["SKU"] + '">Del</button></td>'
+            row += '</tr>'
+
+            $('#transfer').append(row);
+
+        });
+    });
+
     $("#transfer").on('click', '.delbutton', function() {
         var sku = $(this).data('sku');
         $('#add'+sku).show();
@@ -252,6 +297,52 @@ $(function(){
 
     setTableHeaders();
 });
+
+function addTransferRows(){
+            $('#results tr:not(.no)').each( function() {
+            var sku = $(this).data('sku');
+            //$('#'+sku)[0].checkValidity();
+
+            var array = [];
+            var headers = [];
+            var row = '';
+
+            $('#searchtable th').each(function(index, item) {
+                headers[index] = $(item).text();
+            });
+
+            $(this).parent().parent().has('td').each(function() {
+                var arrayItem = {};
+                $('td', $(this)).each(function(index, item) {
+                    if (headers[index] === "Qty (Tfer)") {
+                        arrayItem[headers[index]] = $(item).children('input').val();
+                    } else {
+                        arrayItem[headers[index]] = $(item).text();
+                    };
+                });
+                array.push(arrayItem);
+            });
+
+            var sender = $("select#from").find(':selected').attr('value');
+            var receiver = $("select#to").find(':selected').attr('value');
+            var sendkey = "Qty ("+sender+")";
+            var recvkey = "Qty ("+receiver+")";
+
+            row += '<tr>'
+            row += '<td>' + 0 + '</td>'
+            row += '<td>' + array[0]["SKU"] + '</td>'
+            row += '<td>' + array[0]["Item Name"] + '</td>'
+            row += '<td>' + array[0][sendkey] + '</td>'
+            row += '<td>' + array[0][recvkey] + '</td>'
+            row += '<td>' + array[0]["Qty (Tfer)"] + '</td>'
+            row += '<td class="noprint"><button class="delbutton btn btn-danger btn-sm" data-sku="' + array[0]["SKU"] + '">Del</button></td>'
+            row += '</tr>'
+
+            $('#transfer').append(row);
+
+        });
+
+}
 
 function setTableHeaders(){
     var sender = $("select#from").find(':selected').attr('value');

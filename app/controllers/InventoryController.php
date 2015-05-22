@@ -83,13 +83,13 @@ class InventoryController extends BaseController
         if ($sku && !$department || $sku && $department == 'all' && !$category || $sku && $department == 'all' && $category == 'all') {
             $query .= "(Description LIKE '%$sku%' OR ItemLookupCode LIKE '%$sku%')";
         }
-        if ($sku && $department && !$category) {
+        if ($sku && $department && $department !== 'all' && !$category) {
             $query .= "(Description LIKE '%$sku%' OR ItemLookupCode LIKE '%sku%') AND DepartmentID = $department";
         }
-        if ($sku && $department == 'all' && $category !== 'all') {
+        if ($sku && $department == 'all' && $category && $category !== 'all') {
             $query .= "(Description LIKE '%$sku%' OR ItemLookupCode LIKE '%sku%') AND CategoryID = $category";
         }
-        if ($sku && $department !== 'all' && $category !== 'all') {
+        if ($sku && $department && $department !== 'all' && $category && $category !== 'all') {
             $query .= "(Description LIKE '%$sku%' OR ItemLookupCode LIKE '%sku%') AND DepartmentID = $department AND CategoryID = $category";
         }
         if ($sku && $department !== 'all' && $category == 'all') {
@@ -164,13 +164,17 @@ class InventoryController extends BaseController
         foreach ($combined as $item) {
             if (isset($item['SendQuantity'])) {
                 $send = $item['SendQuantity'];
+            } else {
+                $send = 0;
             }
             if (isset($item['ReceiveQuantity'])) {
                 $receive = $item['ReceiveQuantity'];
+            } else {
+                $receive = 0;
             }
 
             if ($send > ($receive * 2) && $send != 1) {
-                $recommended = floor(($send / 2));
+                $recommended = floor(($send / 2) - ($receive / 2));
             } else {
                 $recommended = 0;
                 $combined[$item['ItemLookupCode']]['SuggestedStatus'] = 'no';
