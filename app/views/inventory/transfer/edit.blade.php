@@ -2,114 +2,73 @@
 
 @section('content')
 <div class="row">
-    <h2>Create Transfer</h2>
+    <h2>Edit Transfer <a class="pull-right" href="/inventory">Return to List</a></h2>
+    <h3>{{$transfer->title}} - {{ $transfer->sending }} to {{ $transfer->receiving }}
+        <span class="pull-right"><b>Status</b>: @if($transfer->status == 0) In Progress @elseif($transfer->status == 1) Complete @else Cancelled @endif</span>
+    </h3>
+    <h4><b>Created</b>: {{ $transfer->created }}</h4>
+    <h4><b>Last Updated</b>: {{ $transfer->lastupdated }}</h4>
     <hr>
 </div>
 
-<form id="search" class="" role="form">
-{{--     <div class="row form-inline margin">
-        <div class="form-group">
-            <label for="transfername" class="">Transfer Name</label>
-            <input type="text" class="form-control input-sm" id="transfername" placeholder="Transfer Name">
-        </div>
-    </div>
- --}}
-    <div class="row form-inline margin">
-        <div class="form-group">
-            <label for="from">Send From</label>
-            <select type="select" class="form-control input-sm destination" id="from">
-                <option value="Toronto">Toronto</option>
-                <option value="Mississauga">Mississauga</option>
-            </select>
-
-            <label for="to">to</label>
-            <select type="select" class="form-control input-sm destination" id="to">
-                <option value="Mississauga">Mississauga</option>
-                <option value="Toronto">Toronto</option>
-            </select>
-        </div>
-    </div>
-
-    <div class="row form-inline">
-        <div class="panel panel-default">
-
-            <div class="panel-heading">
-                <h3 class="panel-title">Filters</h3>
-            </div>
-
-            <div class="panel-body">
-                <div class="form-inline">
-                    <input type="text" class="form-control input-sm" id="sku" placeholder="Item Name/SKU">
-
-                    <label for="to">Department</label>
-                    <select type="select" class="form-control input-sm" id="department">
-                        <option></option>
-                        <option data-id="all">All</option>
-                        @foreach ($departments as $department)
-                            <option data-id='{{ $department->ID }}'>{{ $department->Name }}</option>
-                        @endforeach
-                    </select>
-
-                    <label for="to">Category</label>
-                    <select type="select" class="form-control input-sm" id="category">
-                        <option></option>
-                        <option data-id="all">All</option>
-                    </select>
-
-
-                    <button type="submit" id="search" class="btn btn-primary btn-sm">Search</button>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</form>
-
-<div class="row">
+{{-- <div class="row">
     <h4>Search
-        <div class="btn-group pull-right" style="margin-top: -6px" role="group">
+        <button id="addall" style="margin-top: -6px" class="btn btn-default btn-sm pull-right">Add All</button>
+
+        <div class="btn-group pull-right" style="margin-top: -6px; margin-right: 10px;" role="group">
             <button type="button" id="showsuggested" class="btn btn-sm btn-default active">Show Suggested</button>
             <button type="button" id="showall" class="btn btn-sm btn-default">Show All</button>
         </div>
     </h4>
 
     <table class="table table-bordered" id="searchtable">
-          <thead>
+        <thead>
             <tr>
               <th class="col-md-1">#</th>
               <th>SKU</th>
               <th>Item Name</th>
-              <th class="sender col-md-1">Qty (S)</th>
-              <th class="receiver col-md-1">Qty (R)</th>
+              <th class="sender col-md-1">Qty ({{ $transfer->sending }})</th>
+              <th class="receiver col-md-1">Qty ({{ $transfer->receiving }})</th>
               <th class="col-md-1">Qty (Tfer)</th>
               <th class="col-md-1">Action</th>
             </tr>
-          </thead>
-          <tbody id="results">
-          </tbody>
+        </thead>
+        <tbody id="results">
+        </tbody>
     </table>
 </div>
-
+ --}}
 <div class="row">
     <h4>Current Transfer
-        <button id="printbtn" class="btn btn-primary btn-sm pull-right" style="margin-top: -6px"> Print </button>
-        <button id="clearbtn" class="btn btn-danger btn-sm pull-right" style="margin-top: -6px; margin-right: 10px"> Clear </button>
+        <button id="savebtn" class="btn btn-success btn-sm pull-right" style="margin-top: -6px"> Save </button>
+        <button id="printbtn" class="btn btn-primary btn-sm pull-right" style="margin-top: -6px; margin-right: 10px"> Print </button>
     </h4>
 
     <table id="printable" class="table table-bordered">
-          <thead>
+        <thead>
             <tr>
               <th class="col-md-1">#</th>
               <th>SKU</th>
               <th>Item Name</th>
-              <th class="sender col-md-1">Qty (S)</th>
-              <th class="receiver col-md-1">Qty (R)</th>
+              <th class="sender col-md-1">Qty ({{ $transfer->sending }})</th>
+              <th class="receiver col-md-1">Qty ({{ $transfer->receiving }})</th>
               <th class="col-md-1">Qty (Tfer)</th>
               <th class="noprint col-md-1">Action</th>
             </tr>
-          </thead>
-          <tbody id="transfer">
-          </tbody>
+        </thead>
+        <tbody id="transfer">
+            @foreach($manifest as $item)
+                <tr>
+                    <td>{{ $item->{'#'} }}</td>
+                    <td>{{ $item->{'SKU'} }}</td>
+                    <td>{{ $item->{'Item Name'} }}</td>
+                    <td>{{ $item->{"Qty ($transfer->sending)"} }}</td>
+                    <td>{{ $item->{"Qty ($transfer->receiving)"} }}</td>
+                    <td><input type="number" min="0" class="form-control input-sm" value="{{ $item->{'Qty (Tfer)'} }}"></td>
+                    <td class="noprint"><button class="delbutton btn btn-danger btn-sm" data-sku="{{ $item->{'SKU'} }}">Del</button></td>
+                </tr>
+            @endforeach
+        </tbody>
     </table>
 </div>
 
@@ -121,6 +80,11 @@
 
 <script type="text/javascript">
 $(function(){
+
+    $.ajaxSetup({
+        async: false
+    });
+
     $("select#department").change(function(){
         $.getJSON("/inventory/department", {
             id: $(this).find(':selected').data('id')
@@ -147,7 +111,7 @@ $(function(){
 
             for (var i in j) {
                 num++;
-                results += '<tr class="' + j[i].SuggestedStatus + '">'
+                results += '<tr data-sku="' + j[i].ItemLookupCode + '" class="' + j[i].SuggestedStatus + '">'
                 results += '<td>' + num + '</td>'
                 results += '<td>' + j[i].ItemLookupCode + '</td>'
                 results += '<td>' + j[i].Description + '</td>'
@@ -211,9 +175,9 @@ $(function(){
     });
 
     $("#addall").on('click', function(){
-        $('#results tr').each( function() {
+        $('#results tr.undefined').each( function() {
             var sku = $(this).data('sku');
-            //$('#'+sku)[0].checkValidity();
+            console.log(sku);
 
             var array = [];
             var headers = [];
@@ -223,7 +187,7 @@ $(function(){
                 headers[index] = $(item).text();
             });
 
-            $(this).parent().parent().has('td').each(function() {
+            $(this).has('td').each(function() {
                 var arrayItem = {};
                 $('td', $(this)).each(function(index, item) {
                     if (headers[index] === "Qty (Tfer)") {
@@ -268,8 +232,6 @@ $(function(){
     });
 
     $("button#printbtn").on('click', function() {
-
-
         $("#printable").print({
             noPrintSelector : ".noprint",
             prepend : "<h3>Inventory Transfer</h3><h4>" + $('#from').val() + " &#9654; " + $('#to').val() + "</h4><hr>",
@@ -291,11 +253,29 @@ $(function(){
 
     $("#transfer").bind("sortEnd", transferTableIndex());
 
-    $( "select.destination" ).change(function () {
-        setTableHeaders();
+
+    $("#savebtn").on('click', function() {
+        saveTransfer();
     });
 
-    setTableHeaders();
+    $("#laptop").on('click', function() {
+        $('#department').val('All').change();
+        $('#category').val('Laptop Battery');
+        $('#search').submit();
+    });
+
+    $("#phone").click(function() {
+        $('#department').val('All').change()
+        $('#category').val('Phone Battery');
+        $('#search').submit();
+    });
+
+    $("#adapters").on('click', function() {
+        $('#department').val('Adapters - Laptop').change();
+        $('#category').val('Generic');
+        $('#search').submit();
+    });
+
 });
 
 function addTransferRows(){
@@ -344,15 +324,6 @@ function addTransferRows(){
 
 }
 
-function setTableHeaders(){
-    var sender = $("select#from").find(':selected').attr('value');
-    var receiver = $("select#to").find(':selected').attr('value');
-    var sendkey = "Qty ("+sender+")";
-    var recvkey = "Qty ("+receiver+")";
-    $('th.sender').text(sendkey);
-    $('th.receiver').text(recvkey);
-}
-
 function transferTableIndex(){
     var i = 1;
     $("#transfer").find("tr").each(function(){
@@ -360,6 +331,24 @@ function transferTableIndex(){
         i++;
     });
 };
+
+function saveTransfer(){
+    $('td input').replaceWith(function(){
+       return this.value;
+    });
+
+    var table = $('#printable').tableToJSON({
+        ignoreColumns: [6]
+    });
+
+    var transfer = JSON.stringify(table);
+
+    $.post( "/inventory/details/{{ $transfer->id }}/update", {
+        data: transfer
+    }).done(function( data ) {
+        window.location.href = '/inventory';
+    });
+}
 
 </script>
 

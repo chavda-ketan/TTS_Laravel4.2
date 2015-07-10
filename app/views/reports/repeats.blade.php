@@ -150,27 +150,27 @@
                 title: {
                     text: 'Ratio'
                 },
-                height: '80%',
-                top: '20%'
-
-            },{
-                title: {
-                    text: 'Avg Spend'
-                },
-                height: '20%',
-                top: '0%',
-                // endOnTick: false,
-                offset: 0,
-                plotLines : [{
-                    value : {{ $avg["adwords"] }},
-                    color : 'blue',
-                    dashStyle : 'dot',
-                    width : 2,
-                    label : {
-                        text : 'Aggregate Average Spend - ${{ $avg["adwords"] }}'
-                    }
-                }]
+                // height: '80%',
+                // top: '20%'
             }],
+            // },{
+            //     title: {
+            //         text: 'Avg Spend'
+            //     },
+            //     // height: '20%',
+            //     // top: '0%',
+            //     // endOnTick: false,
+            //     offset: 0,
+            //     plotLines : [{
+            //         value : {{ $avg["adwords"] }},
+            //         color : 'blue',
+            //         dashStyle : 'dot',
+            //         width : 2,
+            //         label : {
+            //             text : 'Aggregate Average Spend - ${{ $avg["adwords"] }}'
+            //         }
+            //     }]
+            // }],
             // },{
             //     title: {
             //         text: 'Trending Avg'
@@ -189,7 +189,7 @@
                 formatter: function() {
                     var points = '<table class="tip" style="font-size: 16px; "><caption>' + this.x + '</caption><tbody>';
 
-                    points += '<tr><th>Total: </th><td style="text-align:right"><b>'+ this.points[0].total + '</b></td></tr>';
+                    // points += '<tr><th>Total: </th><td style="text-align:right"><b>'+ this.points[0].total + '</b></td></tr>';
 
                     $.each(this.points,function(i,point){
 
@@ -252,14 +252,15 @@
             //     yAxis: 0,
             //     type: 'column'
             // },
+            // {
+            //     name: 'Avg Spend',
+            //     data: spend,
+            //     dataLabels: datalabelAvg,
+            //     color: 'red',
+            //     yAxis: 1,
+            //     type: 'line',
+            // },
             {
-                name: 'Avg Spend',
-                data: spend,
-                dataLabels: datalabelAvg,
-                color: 'red',
-                yAxis: 1,
-                type: 'line',
-            }, {
                 name: 'Search Avg',
                 data: searchtrend,
                 dataLabels: datalabelTrends,

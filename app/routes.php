@@ -36,6 +36,10 @@ Route::post('records/landing/aggregate', 'RecordsController@showLandingPageAggre
 /* Delta report */
 Route::get('records/delta', 'RecordsController@showDeltaReport');
 
+/* High score chart */
+Route::get('records/top', 'RecordsController@sortarray');
+
+
 /* Webmaster Tools stuff */
 Route::get('wmt', 'WebmasterToolsController@index');
 
@@ -54,40 +58,59 @@ Route::get('sms/send', 'MailController@sendSMSEmail');
 Route::get('supplier', 'InventoryController@supplierForm');
 Route::post('supplier', 'InventoryController@addSupplier');
 
+
+
 /* Inventory Management */
 
-Route::get('inventory', 'InventoryController@inventoryTransfer');
+Route::get('inventory', 'InventoryController@inventoryTransferList');
+Route::get('inventory/create', 'InventoryController@inventoryTransferCreate');
+
+Route::get('inventory/details/{id}', 'InventoryController@inventoryTransferView');
+Route::get('inventory/details/{id}/edit', 'InventoryController@inventoryTransferEdit');
+Route::get('inventory/details/{id}/cancel', 'InventoryController@inventoryTransferCancel');
+Route::get('inventory/details/{id}/reopen', 'InventoryController@inventoryTransferReopen');
+Route::post('inventory/details/{id}/complete', 'InventoryController@inventoryTransferComplete');
+
+
 Route::get('inventory/department', 'InventoryController@inventoryTransferCategories');
 Route::get('inventory/search', 'InventoryController@inventoryTransferSearch');
+Route::post('inventory/save', 'InventoryController@inventoryTransferSave');
+Route::post('inventory/details/{id}/update', 'InventoryController@inventoryTransferUpdate');
 
-Route::get('inventory/queue', 'InventoryController@inventoryTransferQueue');
+Route::get('inventory/adjustment', 'InventoryController@inventoryAdjustmentLog');
 
-
-
-
-
-
+Route::get('inventory/test/{id}', 'InventoryController@inventoryTransferTest');
 
 
 
+/* Model breakdown */
+Route::get('records/breakdown/dump', 'RecordsController@testBreakdown');
+Route::get('records/breakdown', 'RecordsController@iPhoneBreakdown');
 
 
-/* inline simple shit and ajax shit and SHIT FUCK SHIT SHIT COCK ASS MOTHERFUCKER */
+
+
+/* inline simple shit and shit */
 Route::get('shit/track', 'ShitController@toggleTrack');
 Route::post('shit/range/add', 'ShitController@rangeAdd');
 Route::post('shit/range/del', 'ShitController@rangeDel');
 Route::get('shit/range/daily', 'ShitController@showRangeDailyData');
 
+
+
+
 /* ASS */
-Route::get('battery', 'ShitController@niggersStink');
-Route::get('screen', 'ShitController@hitlerDidNothingWrong');
-Route::get('screen2', 'ShitController@iCantBreathe');
-Route::get('screen3', 'ShitController@chrisBenoit');
+Route::get('battery', 'ShitController@battery');
+Route::get('screen', 'ShitController@laptopScreenBrands');
+Route::get('screen2', 'ShitController@laptopScreenSeries');
+Route::get('screen3', 'ShitController@laptopScreens');
 Route::get('fixparents', 'ShitController@fixParents');
 
-Route::get('noseries', 'ShitController@nancyBenoit');
-Route::get('noseries2', 'ShitController@danielBenoit');
-Route::get('noseries3', 'ShitController@enclosedPoolArea');
+Route::get('noseries', 'ShitController@laptopScreensNoSeries');
+Route::get('noseries2', 'ShitController@laptopScreensNoSeries2');
+Route::get('noseries3', 'ShitController@laptopScreensNoSeries3');
+
+
 
 Route::get('phonebattery', 'ShitController@phoneBatteries');
 Route::get('toners', 'ShitController@tonerCartridges');

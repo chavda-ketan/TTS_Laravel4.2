@@ -7,16 +7,23 @@ class MailController extends BaseController
     public function index()
     {
         $null = '0000-00-00 00:00:00';
-        $customers = DB::connection('mysql-godaddy')->select("SELECT * FROM thank_you_email WHERE email_open_date != '$null' ORDER BY email_open_date DESC, google_click_date DESC");
+        $customers = DB::connection('mysql-cac')->select("SELECT * FROM thank_you_email
+                                                          WHERE email_open_date != '$null'
+                                                          ORDER BY email_open_date DESC,
+                                                          google_click_date DESC");
 
         foreach ($customers as $customer) {
             if ($customer->yelp_click_date != $null || $customer->google_click_date != $null) {
-                $customerNameQuery = "SELECT OrderID, Customer.FirstName AS firstName, Customer.LastName AS lastName,
-		            Customer.EmailAddress AS emailAddress FROM [Order], Customer, OrderEntry
-		            WHERE Customer.ID=[Order].CustomerID AND OrderEntry.OrderID=[Order].ID AND OrderID = $customer->wo_id";
+                $customerNameQuery = "SELECT OrderID,
+                                      Customer.FirstName AS firstName,
+                                      Customer.LastName AS lastName,
+		                              Customer.EmailAddress AS emailAddress
+                                      FROM [Order], Customer, OrderEntry
+		                              WHERE Customer.ID = [Order].CustomerID
+                                      AND OrderEntry.OrderID = [Order].ID
+                                      AND OrderID = $customer->wo_id";
 
                 $customer->class = 'success';
-
 
                 if ($customer->s == 't') {
                     $db = 'mssql-toronto';
@@ -71,7 +78,7 @@ class MailController extends BaseController
                     // $this->checkIfBusiness($customer->EmailAddress);
 
                     /* Check if the applicable workorder already had an email sent, skip if so */
-                    $select = DB::connection('mysql-godaddy')->table('thank_you_email')->where('wo_id', '=', $customer->OrderID)->first();
+                    $select = DB::connection('mysql-cac')->table('thank_you_email')->where('wo_id', '=', $customer->OrderID)->first();
 
                     if (is_null($select)) {
                         $serviceRendered = $serviceList[$customer->ItemID];
@@ -80,11 +87,12 @@ class MailController extends BaseController
                         print($customer->FirstName . ' - ');
                         print($customer->OrderID . ' - ');
                         print($customer->Location . ' - ');
+                        print($customer->Date . ' - ');
 
                         print($serviceRendered);
                         print('<br>');
 
-                        $this->sendThankYouEmail($customer->FirstName, $customer->EmailAddress, $serviceRendered, $customer->Location, $customer->OrderID);
+                        $this->sendThankYouEmail($customer->FirstName, $customer->EmailAddress, $serviceRendered, $customer->Location, $customer->OrderID, $customer->Date);
                     }
                 }
             }
@@ -93,16 +101,16 @@ class MailController extends BaseController
     }
 
     /* Send the email template */
-    private function sendThankYouEmail($name, $email, $service, $location, $wo_id)
+    private function sendThankYouEmail($name, $email, $service, $location, $wo, $date)
     {
         /* Check if the applicable workorder already had an email sent, skip if so */
         // $query = "SELECT * FROM thank_you_email WHERE wo_id = '$wo_id'";
-        $select = DB::connection('mysql-godaddy')->table('thank_you_email')->where('wo_id', '=', $wo_id)->first();
+        $select = DB::connection('mysql-cac')->table('thank_you_email')->where('wo_id', '=', $wo)->first();
 
         if (is_null($select)) {
 
-            $query = "INSERT INTO thank_you_email SET wo_id='$wo_id', s='$location', sent_date=NOW()";
-            $insert = DB::connection('mysql-godaddy')->insert($query);
+            $query = "INSERT INTO thank_you_email SET wo_id='$wo', s='$location', sent_date=NOW()";
+            $insert = DB::connection('mysql-cac')->insert($query);
 
             // Recipient data
             $user = array(
@@ -115,13 +123,15 @@ class MailController extends BaseController
                 'name' => $user['name'],
                 'service' => $service,
                 'location' => $location,
-                'wo_id' => $wo_id,
+                'wo' => $wo,
+                'date' => $date
             );
 
             // Queue up the mail so things don't hang. Yay for Redis
             Mail::queue('emails.thankyou', $data, function ($message) use ($user) {
                 $message->from('service@techknowspace.com', 'TechKnow Space');
                 $message->to($user['email'], $user['name'])->subject('Thank You!');
+                // $message->to('aubrey@techknowspace.com', $user['name'])->subject('Thank You!');
             });
 
         }
@@ -165,7 +175,7 @@ class MailController extends BaseController
         $data['content'] = '';
 
         $null = '0000-00-00 00:00:00';
-        $customers = DB::connection('mysql-godaddy')->select("SELECT * FROM thank_you_email
+        $customers = DB::connection('mysql-cac')->select("SELECT * FROM thank_you_email
                                                               -- WHERE s = 't'
                                                               -- WHERE email_open_date != '$null'
                                                               ORDER BY email_open_date DESC,
@@ -204,19 +214,21 @@ class MailController extends BaseController
     /* Pull yesterday's customers from Toronto/SquareOne dbs */
     private function loadCustomersToThank()
     {
-        // $date = date("Y-m-d", strtotime("-150 days"));
-        $date = date("Y-m-d", strtotime("-0 days"));
+        $date = date("Y-m-d", strtotime("-45 days"));
         $date .= ' 00:00:00';
-        // $date2 = date("Y-m-d", strtotime("-1 days"));
-        $date2 = date("Y-m-d", strtotime("+2"));
+        $date2 = date("Y-m-d", strtotime("+1 days"));
         $date2 .= ' 00:00:00';
 
-        $sql = "SELECT OrderID, ItemID, OrderEntry.[Comment], Customer.FirstName AS FirstName,
-            Customer.EmailAddress AS EmailAddress FROM OrderEntry, [Order],
-            Customer WHERE \"Order\".Closed=1 AND \"Order\".Total NOT IN ('28.25','45.20')
-            AND \"Order\".Total>0 AND Customer.ID=\"Order\".CustomerID
-            AND OrderEntry.OrderID=\"Order\".ID AND OrderEntry.Price > 0 AND OrderEntry.LastUpdated > '$date'
-            AND OrderEntry.LastUpdated < '$date2' AND OrderEntry.\"Comment\" LIKE '%YYY%'
+        $sql = "SELECT OrderID, ItemID, OrderEntry.[Comment], OrderEntry.LastUpdated AS Date, Customer.FirstName AS FirstName, Customer.EmailAddress AS EmailAddress
+            FROM OrderEntry, [Order], Customer
+            WHERE [Order].Closed = 1
+            AND [Order].Total NOT IN ('28.25','45.20')
+            AND [Order].Total > 0
+            AND Customer.ID = [Order].CustomerID
+            AND OrderEntry.OrderID = [Order].ID
+            AND OrderEntry.Price > 0
+            AND OrderEntry.LastUpdated > '$date'
+            AND OrderEntry.LastUpdated < '$date2'
             AND DATALENGTH(Customer.EmailAddress) > 0
             ORDER BY OrderEntry.ID DESC";
 
@@ -260,12 +272,12 @@ class MailController extends BaseController
     {
         $item[3033] = "iPhone";
         $item[3195] = "iPad";
-        $item[3168] = "Laptop";
+        $item[3168] = "Computer";
         $item[3167] = "Laptop Screen";
         $item[3140] = "Samsung";
         $item[3133] = "Blackberry";
         $item[3141] = "LG";
-        $item[3173] = "Macbook";
+        $item[3173] = "Apple Computer";
         $item[3201] = "PS3";
         $item[3136] = "Nokia";
         $item[7432] = "iPad Mini";

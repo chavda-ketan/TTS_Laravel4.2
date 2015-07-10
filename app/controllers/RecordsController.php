@@ -999,4 +999,138 @@ CUSTOMER LOOKUP
 
         return View::make('records.customerlookup', $data);
     }
+
+/**
+Model breakdown
+ */
+
+    public function iPhoneBreakdown()
+    {
+        $data['years'] = array('2011','2012','2013','2014','2015');
+
+        foreach ($data['years'] as $year) {
+            $data["_$year"]['4'] = $this->iPhoneBreakdownQuery($year, "Description LIKE '%iPhone 4%' AND Description NOT LIKE '%iPhone 4S%'");
+            $data["_$year"]['4s'] = $this->iPhoneBreakdownQuery($year, "Description LIKE '%iPhone 4s%'");
+            if ($year > 2011) {
+                $data["_$year"]['5'] = $this->iPhoneBreakdownQuery($year, "Description LIKE '%iPhone 5%' AND Description NOT LIKE '%iPhone 5s%'");
+            }
+            if ($year > 2012) {
+                $data["_$year"]['5s'] = $this->iPhoneBreakdownQuery($year, "Description LIKE '%iPhone 5s%'");
+            }
+            if ($year > 2013) {
+                $data["_$year"]['5c'] = $this->iPhoneBreakdownQuery($year, "Description LIKE '%iPhone 5c%'");
+                $data["_$year"]['6'] = $this->iPhoneBreakdownQuery($year, "Description LIKE '%iPhone 6%' AND Description NOT LIKE '%iPhone 6 plus%' AND Description NOT LIKE '%iPhone 6+%'");
+            }
+            if ($year > 2014) {
+                $data["_$year"]['6+'] = $this->iPhoneBreakdownQuery($year, "(Description LIKE '%iPhone 6[+]%' OR Description LIKE '%iPhone 6 plus%')");
+
+            }
+
+            $data["_$year"]['total'] = $this->iPhoneBreakdownQuery($year, "ItemID = 3033");
+        }
+
+        return View::make('reports.iphonebreakdown', $data);
+    }
+
+
+    public function iPhoneBreakdownQuery($year, $model)
+    {
+        $query = "SELECT ISNULL([1], 0) AS January,
+                  [2] AS February,
+                  [3] AS March,
+                  [4] AS April,
+                  [5] AS May,
+                  [6] AS June,
+                  [7] AS July,
+                  [8] AS August,
+                  [9] AS September,
+                  [10] AS October,
+                  [11] AS November,
+                  [12] AS December
+                  FROM (
+                    SELECT MONTH(LastUpdated) AS month FROM OrderEntry WHERE $model AND YEAR(LastUpdated) = $year
+                  ) AS t
+                  PIVOT (
+                    COUNT(month) FOR month IN ([1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12])
+                  ) p";
+
+        $results['m'] = DB::connection('mssql-squareone')->select($query);
+        $results['t'] = DB::connection('mssql-toronto')->select($query);
+
+        $combined = Array();
+
+        if (isset($results['m'][0])) {
+            foreach ($results['m'][0] as $key => $value) {
+                $combined[$key] = $value;
+            }
+        }
+
+        if (isset($results['t'][0])) {
+            foreach ($results['t'][0] as $key => $value) {
+                $combined[$key] += $value;
+            }
+        }
+
+        return $combined;
+    }
+
+    public function testBreakdown()
+    {
+        return $this->iPhoneBreakdown();
+        // return var_dump($this->iPhoneBreakdownQuery('2010', "'%iPhone 4%' AND Description NOT LIKE '%iPhone 4S%'"));
+    }
+
+/**
+Leaderboard
+ */
+
+    function sortarray(){
+        // 3168 laptop services
+        //"3169", laptop power jack
+        //"3170", Laptop Keyboard replacement
+        //"3049", Phone
+        //"3139", IPAq
+        //"3199", Nintendo DS
+        //"3198", PSP
+        //"3138", Palm
+        //"3171", Other Hardware Repair/Replacem
+        //"7144", unlocking
+
+        $store = 'toronto';
+        $startdate = '2015-04-20';
+        $enddate = '2015-04-21';
+
+        $arr = array("3133","3134", "3033","3203", "3197", "3195",  "3167", "3141", "3143", "3135", "3173","3172", "3136","3201", "3140", "3137", "3200","7601","7603","7432","7599", "7430", "7752");reset($arr);
+        $counter=0;
+        while (list(, $value) = each($arr)) {
+            if ($value) { $condition="and OrderEntry.ItemID='".$value."'"; }
+            $sqlquery = "select COUNT(*) from OrderEntry, \"Order\" where OrderEntry.OrderID=\"Order\".ID ".$condition." and \"Order\".Time >= '".$startdate."' and \"Order\".Time < '".$enddate."' ";
+
+            if($store == 'squareone') {
+                $result = $db->getData($sqlquery);
+            } else if($store == 'toronto') {
+                $result = $db->getDataToronto($sqlquery);
+            }
+            $salesReturnFromDB[$value].=$result[0][0];
+        }
+        //for misc
+        $condition="and OrderEntry.ItemID in ('3049', '3139', '3199', '3198', '3138', '3171')";
+        $sqlquery = "select COUNT(*) from OrderEntry, \"Order\" where OrderEntry.OrderID=\"Order\".ID ".$condition." and \"Order\".Time >= '".$startdate."' and \"Order\".Time < '".$enddate."' ";
+        if($store == 'squareone') {
+            $result = $db->getData($sqlquery);
+        } else if($store == 'toronto') {
+            $result = $db->getDataToronto($sqlquery);
+        }
+        $salesReturnFromDB['1111'].=$result[0][0];
+        //for laptop services
+        $condition="and OrderEntry.ItemID in ('3168', '3170','3169' )";
+        $sqlquery = "select COUNT(*) from OrderEntry, \"Order\" where OrderEntry.OrderID=\"Order\".ID ".$condition." and \"Order\".Time >= '".$startdate."' and \"Order\".Time < '".$enddate."' ";
+        if($store == 'squareone') {
+            $result = $db->getData($sqlquery);
+        } else if($store == 'toronto') {
+            $result = $db->getDataToronto($sqlquery);
+        }
+        $salesReturnFromDB['3168'].=$result[0][0];
+        return $salesReturnFromDB;
+    }
 }

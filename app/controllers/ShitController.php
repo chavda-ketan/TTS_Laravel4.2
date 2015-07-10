@@ -56,7 +56,7 @@ class ShitController extends BaseController
     }
 
 
-    public function phoneBatteries()
+    public function battery()
     {
         $itemQuery = 'SELECT Description, ItemLookupCode, ExtendedDescription FROM Item
                       WHERE DepartmentID = 27
@@ -119,7 +119,7 @@ class ShitController extends BaseController
         return var_dump($ret);
     }
 
-    public function niggersStink()
+    public function laptopBatteries()
     {
         $itemQuery = 'SELECT Description, ItemLookupCode, ExtendedDescription FROM Item
                       WHERE DepartmentID = 27
@@ -192,7 +192,7 @@ class ShitController extends BaseController
     }
 
 
-    public function hitlerDidNothingWrong()
+    public function laptopScreenBrands()
     {
 
         $itemQuery = 'SELECT DISTINCT brand FROM models';
@@ -221,7 +221,7 @@ class ShitController extends BaseController
         return var_dump($ret);
     }
 
-    public function iCantBreathe()
+    public function laptopScreenSeries()
     {
 
         $itemQuery = 'SELECT DISTINCT brand, series FROM models WHERE series != ""';
@@ -288,7 +288,7 @@ class ShitController extends BaseController
         return var_dump($ret);
     }
 
-    public function chrisBenoit()
+    public function laptopScreens()
     {
         $itemQuery = 'SELECT DISTINCT brand, series, fullname FROM models WHERE series != ""';
 
@@ -326,7 +326,7 @@ class ShitController extends BaseController
     }
 
     // SHIT FOR SERIES-LESS SHIT
-    public function nancyBenoit()
+    public function laptopScreensNoSeries()
     {
         $itemQuery = 'SELECT DISTINCT brand, series FROM models WHERE series = "" AND brand != "LG" AND brand != "eMachines"';
 
@@ -398,7 +398,7 @@ class ShitController extends BaseController
     }
 
     // SERIES-LESS MODELS
-    public function danielBenoit()
+    public function laptopScreensNoSeries2()
     {
         $itemQuery = 'SELECT DISTINCT brand, series, fullname FROM models WHERE series = "" AND brand != "LG" AND brand != "eMachines"';
 
@@ -436,7 +436,7 @@ class ShitController extends BaseController
         return var_dump($ret);
     }
 
-    public function enclosedPoolArea()
+    public function laptopScreensNoSeries3()
     {
         $itemQuery = 'SELECT DISTINCT brand, series, fullname FROM models WHERE series = "" AND brand = "LG" OR brand = "eMachines"';
 
@@ -477,8 +477,6 @@ class ShitController extends BaseController
         $ret = $items;
         return var_dump($ret);
     }
-
-
 
 
     public function batterySeries()

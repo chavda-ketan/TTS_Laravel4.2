@@ -62,6 +62,7 @@
     <script src="/js/sb-admin-2.js"></script>
 
     <script src="/js/print.js"></script>
+    <script src="/js/jquery.tabletojson.js"></script>
 
     @yield('scripts')
 </body>

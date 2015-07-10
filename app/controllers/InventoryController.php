@@ -43,15 +43,47 @@ class InventoryController extends BaseController
         return View::make('inventory.supplierform');
     }
 
-
-    public function inventoryTransfer()
+/**
+Inventory Transfers
+ */
+    public function inventoryTransferList()
     {
-        $query = "SELECT * FROM Department";
+        $data['transfers'] = DB::connection('mysql')->select('SELECT * FROM inventory_transfer
+                                                              ORDER BY id DESC');
+        return View::make('inventory.transfer.list', $data);
+    }
+
+    public function inventoryTransferCreate()
+    {
+        $query = "SELECT * FROM Department ORDER BY Name ASC";
         $departments = DB::connection('mssql-squareone')->select($query);
 
         $data['departments'] = $departments;
 
-        return View::make('inventory.transfer', $data);
+        return View::make('inventory.transfer.create', $data);
+    }
+
+    public function inventoryTransferView($id)
+    {
+        $data['transfer'] = DB::connection('mysql')->select("SELECT * FROM inventory_transfer
+                                                              WHERE id = $id
+                                                              ORDER BY id DESC")[0];
+
+        $data['manifest'] = json_decode($data['transfer']->data);
+        $data['finalmanifest'] = json_decode($data['transfer']->finaldata);
+
+        return View::make('inventory.transfer.view', $data);
+    }
+
+    public function inventoryTransferEdit($id)
+    {
+        $data['transfer'] = DB::connection('mysql')->select("SELECT * FROM inventory_transfer
+                                                              WHERE id = $id
+                                                              ORDER BY id DESC")[0];
+
+        $data['manifest'] = json_decode($data['transfer']->data);
+
+        return View::make('inventory.transfer.edit', $data);
     }
 
     public function inventoryTransferCategories()
@@ -62,6 +94,8 @@ class InventoryController extends BaseController
         if ($department !== 'all') {
             $query .= " WHERE DepartmentID = $department";
         }
+
+        $query .= " ORDER BY Name ASC";
 
         $json = DB::connection('mssql-squareone')->select($query);
 
@@ -118,8 +152,115 @@ class InventoryController extends BaseController
         usort($combined, "self::sortByTransferCount");
 
         return Response::json($combined);
-        // return Response::json($jsonMississauga);
     }
+
+    public function inventoryTransferSave()
+    {
+        $title = Input::get('title');
+        $sending = Input::get('sending');
+        $receiving = Input::get('receiving');
+        $data = Input::get('data');
+
+        DB::connection('mysql')->table('inventory_transfer')->insert(
+            array(
+                'title' => $title,
+                'sending' => $sending,
+                'receiving' => $receiving,
+                'data' => $data
+            )
+        );
+
+        return 'success';
+    }
+
+    public function inventoryTransferUpdate($id)
+    {
+        $data = Input::get('data');
+
+        DB::connection('mysql')->table('inventory_transfer')->where('id', $id)->update(
+            array(
+                'data' => $data,
+            )
+        );
+
+        return 'success';
+    }
+
+    public function inventoryTransferCancel($id)
+    {
+
+        DB::connection('mysql')->table('inventory_transfer')->where('id', $id)->update(
+            array(
+                'status' => 2
+            )
+        );
+
+        return $this->inventoryTransferView($id);
+    }
+
+    public function inventoryTransferReopen($id)
+    {
+
+        DB::connection('mysql')->table('inventory_transfer')->where('id', $id)->update(
+            array(
+                'status' => 0
+            )
+        );
+
+        return $this->inventoryTransferView($id);
+    }
+
+    public function inventoryTransferComplete($id)
+    {
+        $data = Input::get('data');
+
+        DB::connection('mysql')->table('inventory_transfer')->where('id', $id)->update(
+            array(
+                'finaldata' => $data,
+                'status' => 1
+            )
+        );
+
+        $this->inventoryTransferStartAdjustment($id);
+
+        return 'success';
+    }
+
+    public function inventoryTransferStartAdjustment($id)
+    {
+        $data['transfer'] = DB::connection('mysql')->select("SELECT * FROM inventory_transfer
+                                                              WHERE id = $id
+                                                              ORDER BY id DESC")[0];
+
+        $data['manifest'] = json_decode($data['transfer']->data);
+
+        $this->inventoryTransferAdjustQuantities($data['manifest'], $data['transfer']->sending, $data['transfer']->receiving);
+
+        return;
+    }
+
+    public function inventoryTransferAdjustQuantities($manifest, $from, $to)
+    {
+        foreach ($manifest as $item) {
+            $sku = $item->{'SKU'};
+            $adjustment = $item->{'Qty (Tfer)'};
+            $fromadjustment = "Quantity - $adjustment";
+            $toadjustment = "Quantity + $adjustment";
+
+            Queue::push('InventoryUpdateHandler', array(
+                'ItemLookupCode' => $sku,
+                'Location' => $from,
+                'Adjustment' => $fromadjustment
+            ));
+
+            Queue::push('InventoryUpdateHandler', array(
+                'ItemLookupCode' => $sku,
+                'Location' => $to,
+                'Adjustment' => $toadjustment
+            ));
+        }
+    }
+
 
     private function combineInventoryArrays($m, $t, $from)
     {
@@ -186,6 +327,7 @@ class InventoryController extends BaseController
         return $combined;
     }
 
+    // Sorters
     private static function sortBySuggested($a, $b)
     {
         if (isset($a['SuggestedStatus']) && isset($b['SuggestedStatus']))
@@ -217,4 +359,22 @@ class InventoryController extends BaseController
             return 1;
         }
     }
+
+/**
+Inventory Adjustment Log
+ */
+
+    public function inventoryAdjustmentLog()
+    {
+        $query = "SELECT timestamp, location, sku, `from`, `to`, `reason` FROM inventory_adjustment ORDER BY id DESC";
+
+        $result = DB::connection('mysql')->select($query);
+
+        $data['logs'] = $result;
+
+        return View::make('inventory.adjustment', $data);
+    }
+
+
+
 }
