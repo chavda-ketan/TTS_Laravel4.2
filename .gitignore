@@ -6,3 +6,4 @@ composer.lock
 .env.phps
 .DS_Store
 Thumbs.db
+*.pdf

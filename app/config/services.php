@@ -15,9 +15,9 @@ return array(
 	*/
 
 	'mailgun' => array(
-		'domain' => 'mg.taimalabs.com',
+		'domain' => 'mg.techknowspace.com',
 		// 'domain' => 'sandbox0e0525cb421e44b0b8b1463142f25616.mailgun.org',
-		'secret' => 'key-932og69uu03lcchrjbno1c4trgxvyit8',
+		'secret' => 'key-e163c640a3526c8a5cf5b5058f3d8602',
 	),
 
 	'mandrill' => array(

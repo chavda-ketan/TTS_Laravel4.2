@@ -82,6 +82,16 @@ Route::get('inventory/adjustment', 'InventoryController@inventoryAdjustmentLog')
 Route::get('inventory/test/{id}', 'InventoryController@inventoryTransferTest');
 
 
+/* Account statements */
+Route::get('statement/test', 'StatementController@generateStatement');
+Route::get('statement/invoice', 'StatementController@invoice');
+Route::get('statement/overdue', 'StatementController@overdue');
+Route::get('statement/blob', 'StatementController@blobTest');
+Route::get('statement/receipt/{customer}/{transaction}','StatementController@generateReceipt');
+
+
+Route::get('statement/cron','StatementController@accountStatementCron');
+
 
 /* Model breakdown */
 Route::get('records/breakdown/dump', 'RecordsController@testBreakdown');

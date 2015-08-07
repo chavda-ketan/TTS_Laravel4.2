@@ -321,6 +321,10 @@ Inventory Transfers
                 $combined[$item['ItemLookupCode']]['SuggestedStatus'] = 'no';
             }
 
+            if ($recommended < 0) {
+                $recommended = 0;
+            }
+
             $combined[$item['ItemLookupCode']]['Recommended'] = $recommended;
         }
 

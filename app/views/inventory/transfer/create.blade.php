@@ -308,6 +308,8 @@ $(function(){
 
     $("select.destination").change(function () {
         setTableHeaders();
+        $('#transfer').empty();
+        $('#results').empty();
     });
 
     setTableHeaders();
