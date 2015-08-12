@@ -1,225 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<meta name="viewport" content="width=device-width" />
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<style>
-/* -------------------------------------
-        GLOBAL
-------------------------------------- */
-* {
-    margin: 0;
-    padding: 0;
-    font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
-    font-size: 80%;
-    line-height: 1.4;
-}
 
-img {
-    max-width: 100%;
-}
-
-body {
-    -webkit-font-smoothing: antialiased;
-    -webkit-text-size-adjust: none;
-    width: 100%!important;
-    height: 100%;
-}
-
-
-/* -------------------------------------
-        ELEMENTS
-------------------------------------- */
-a {
-    color: #348eda;
-}
-
-.btn-primary {
-    text-decoration: none;
-    color: #FFF;
-    background-color: #348eda;
-    border: solid #348eda;
-    border-width: 10px 20px;
-    line-height: 2;
-    font-weight: bold;
-    margin-right: 10px;
-    text-align: center;
-    cursor: pointer;
-    display: inline-block;
-    border-radius: 25px;
-}
-
-.btn-secondary {
-    text-decoration: none;
-    color: #FFF;
-    background-color: #aaa;
-    border: solid #aaa;
-    border-width: 10px 20px;
-    line-height: 2;
-    font-weight: bold;
-    margin-right: 10px;
-    text-align: center;
-    cursor: pointer;
-    display: inline-block;
-    border-radius: 25px;
-}
-
-.last {
-    margin-bottom: 0;
-}
-
-.first {
-    margin-top: 0;
-}
-
-.padding {
-    padding: 10px 0;
-}
-
-
-/* -------------------------------------
-        BODY
-------------------------------------- */
-table.body-wrap {
-    width: 100%;
-    padding: 0px;
-}
-
-table.body-wrap .container {
-}
-
-table.body-wrap .logo {
-    border: none;
-}
-
-
-/* -------------------------------------
-        FOOTER
-------------------------------------- */
-table.footer-wrap {
-    width: 100%;
-    clear: both!important;
-}
-
-.footer-wrap .container p {
-    font-size: 12px;
-    color: #666;
-
-}
-
-table.footer-wrap a {
-    color: #999;
-}
-
-
-/* -------------------------------------
-        TYPOGRAPHY
-------------------------------------- */
-h1, h2, h3 {
-    font-family: "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
-    color: #000;
-    margin: 10px 0 10px;
-    line-height: 1.2;
-    font-weight: 200;
-}
-
-h1 {
-    font-size: 180%;
-}
-h2 {
-    font-size: 160%;
-}
-h3 {
-    font-size: 140%;
-}
-
-p, ul, ol {
-    margin-bottom: 10px;
-    font-weight: normal;
-    font-size: 14px;
-}
-
-ul li, ol li {
-    margin-left: 5px;
-    list-style-position: inside;
-}
-
-/* ---------------------------------------------------
-        RESPONSIVENESS
-        Nuke it from orbit. It's the only way to be sure.
------------------------------------------------------- */
-
-/* Set a max-width, and make it display as block so it will automatically stretch to that width, but will also shrink down on a phone or something */
-.container {
-    display: block!important;
-    max-width: 1200px!important;
-    margin: 0 auto!important; /* makes it centered */
-    clear: both!important;
-    min-width: 600px !important;
-}
-
-/* Set the padding on the td rather than the div for Outlook compatibility */
-.body-wrap .container {
-    padding: 20px;
-}
-
-/* This should also be a block element, so that it will fill 100% of the .container */
-.content {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: block;
-}
-
-/* Let's make sure tables in the content area are 100% wide */
-.content table {
-    width: 100%;
-}
-
-.head {
-    border-bottom: 1px dashed #ddd;
-}
-
-td {
-    vertical-align: top;
-}
-
-.realtable {
-    border-spacing: 0px;
-    border-collapse: collapse;
-    font-size: 13px;
-}
-.realtable, .realtable td, .realtable th {
-    text-align: left;
-    font-weight: normal;
-    border: 1px solid #ccc;
-    border-collapse: collapse;
-    border-spacing: 0px;
-}
-.summarytable, .summarytable td {
-    border: none !important;
-}
-.summarytable {
-}
-
-.headright {
-    text-align: right !important;
-    padding: 0 !important;
-}
-
-.realtable tbody tr td {
-    border-top: none;
-    border-bottom: none;
-}
-@media print {
-    * {
-        font-size: 12px;
-    }
-}
-</style>
-</head>
-
-<body bgcolor="#fff">
-<!-- body -->
 <table class="body-wrap" bgcolor="#fff">
     <tr>
         <td></td>
@@ -230,7 +9,7 @@ td {
                 <table>
                     <tr>
                         <td style="width: 50%">
-                            <h2 style="font-size: 160%;">The Techknow Space</h2>
+                            <h2 style="font-size: 160%;">The Techknow Space Inc.</h2>
                             <p>
                                 33 City Centre Dr. Unit #142<br/>
                                 Mississauga, Ontario  L5B 2N5<br/>
@@ -249,8 +28,8 @@ td {
                         <td class="headright">
                             <h2 style="font-size: 160%;">Account Statement</h2>
                             <p>
-                                Account Number: {{ $account->AccountNumber }}<br/>
-                                Balance: ${{ $account->AccountBalance - 0}}<br/>
+                                {{ $account->Company }}<br/>
+                                Balance: ${{ number_format((float) $account->AccountBalance, 2, '.', '') }}<br/>
                             </p>
                         </td>
                     </tr>
@@ -263,7 +42,7 @@ td {
                     <tbody>
                         <tr>
                             <td>
-                                <h2 style="font-size: 160%;">Account Summary</h2>
+                                <h2 style="font-size: 160%;">Account Summary - {{ $location }}</h2>
                                 <p>
                                 </p>
                             </td>
@@ -298,11 +77,11 @@ td {
                                     </td>
 
                                     <td class="headright" style="width: 25%">
-                                        ${{ $account->AccountBalance - $newCharges }}<br/>
+                                        ${{ number_format((float) $account->AccountBalance - $newCharges, 2, '.', '') }}<br/>
                                         ${{ $newCharges }}<br/>
                                         ${{ $newPayments }}<br/>
                                         =======================<br/>
-                                        ${{ $account->AccountBalance - 0 }}
+                                        ${{ number_format((float) $account->AccountBalance, 2, '.', '') }}
                                     </td>
                                 </tr>
                             </table>
@@ -316,7 +95,7 @@ td {
                     <tbody>
                         <tr>
                             <td>
-                                <h2 style="font-size: 160%;">Transaction Activity</h2>
+                                <h2 style="font-size: 160%;">Transaction Activity - {{ $location }}</h2>
                                 <p>
                                 </p>
                             </td>
@@ -341,7 +120,7 @@ td {
                         <tr>
                             <td>TR-{{ $transactionId }}<br/>
                                 &nbsp;&nbsp;&nbsp;{{ $transaction['entry']->FormattedDate }}</td>
-                            <td></td>
+                            <td>15/{{ date("m/Y", strtotime("+1 month", strtotime($transaction['entry']->Date))) }}</td>
                             <td>
                                 @foreach($transaction['orderentry'] as $lineItem)
                                     {{ $lineItem->Description }}<br/>
@@ -349,10 +128,17 @@ td {
                                         &nbsp;&nbsp;-&nbsp;{{ $lineItem->Comment }}<br/>
                                     @endif
                                 @endforeach
+
+                                @foreach($transaction['items'] as $lineItem)
+                                    {{ $lineItem->Description }}<br/>
+                                    @if($lineItem->Comment)
+                                        &nbsp;&nbsp;-&nbsp;{{ $lineItem->Comment }}<br/>
+                                    @endif
+                                @endforeach
                             </td>
-                            <td>${{ $transaction['entry']->Amount - 0 }}</td>
+                            <td>${{ number_format((float) $transaction['entry']->Amount, 2, '.', '') }}</td>
                             <td></td>
-                            <td>${{ $transaction['newBalance'] }}</td>
+                            <td>${{ number_format((float) $transaction['newBalance'], 2, '.', '') }}</td>
                         </tr>
                     @endforeach
                     </tbody>
@@ -362,9 +148,9 @@ td {
                             <td style="border-left: none; border-right: none;"></td>
                             <td style="border-left: none; border-right: none;"></td>
                             <td style="border-left: none; text-align: right; padding-right: 5px;">Total</td>
+                            <td>${{ number_format((float) $account->AccountBalance, 2, '.', '') }}</td>
                             <td>$0.00</td>
-                            <td>$0.00</td>
-                            <td>${{ $account->AccountBalance - 0 }}</td>
+                            <td>${{ number_format((float) $account->AccountBalance, 2, '.', '') }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -374,7 +160,3 @@ td {
         <td></td>
     </tr>
 </table>
-<!-- /body -->
-
-</body>
-</html>

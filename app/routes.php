@@ -87,10 +87,12 @@ Route::get('statement/test', 'StatementController@generateStatement');
 Route::get('statement/invoice', 'StatementController@invoice');
 Route::get('statement/overdue', 'StatementController@overdue');
 Route::get('statement/blob', 'StatementController@blobTest');
-Route::get('statement/receipt/{customer}/{transaction}','StatementController@generateReceipt');
+// Route::get('statement/receipt/{customer}/{transaction}','StatementController@generateReceipt');
+Route::get('statement/receipt','StatementController@accountReceiptTest');
 
 
 Route::get('statement/cron','StatementController@accountStatementCron');
+Route::get('statement/receipt/cron','StatementController@accountReceiptCron');
 
 
 /* Model breakdown */

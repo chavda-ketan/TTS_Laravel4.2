@@ -1,47 +1,112 @@
 <?php
 
 class StatementController extends BaseController {
-    public function bulkReceiptCron()
-    {
 
+//Samsung Electronics Canada Inc
+
+    public function accountReceiptCron()
+    {
+        $query = "SELECT * FROM Customer, [Transaction]
+                  WHERE (AccountNumber = 'TEST-ACCOUNT-1' OR AccountNumber = 'TEST-ACCOUNT-2' OR AccountNumber = 'TEST-ACCOUNT-3')
+                  AND [Transaction].CustomerID = Customer.ID
+                  AND [Transaction].Time >= dateadd(day,datediff(day,1,GETDATE()),0)
+                  AND [Transaction].Time < dateadd(day,datediff(day,0,GETDATE()),0)";
+
+        $customersS1 = DB::connection('mssql-squareone')->select($query);
+        $customersTO = DB::connection('mssql-toronto')->select($query);
+
+        $receipts = [];
+
+        foreach ($customersS1 as $customer) {
+            $rendered = $this->generateReceipt('mssql-squareone', $customer->ID, $customer->TransactionNumber);
+            $receipts[$customer->EmailAddress]['receipts'][] = $rendered;
+        }
+
+        foreach ($customersTO as $customer) {
+            $rendered = $this->generateReceipt('mssql-toronto', $customer->ID, $customer->TransactionNumber);
+            $receipts[$customer->EmailAddress]['receipts'][] = $rendered;
+        }
+
+        foreach ($receipts as $email => $receipt) {
+            $this->mailReceipts($receipt, $email);
+        }
+
+        return 'ok';
     }
 
-    // public function accountStatementCronTest()
-    // {
-    //     $customersS1 = DB::connection('mssql-squareone')->select("SELECT * FROM Customer WHERE AccountNumber = '905 897 9860'");
-    //     $customersTO = DB::connection('mssql-toronto')->select("SELECT * FROM Customer WHERE AccountNumber = '905 897 9860'");
+    public function generateReceipt($database, $customerId, $transactionNumber)
+    {
+        $customer = $this->getCustomer($database, $customerId);
+        $transaction = $this->getTransaction($database, $transactionNumber);
+        $lineItemsForTransaction = $this->getTransactionLineItems($database, $transactionNumber);
+        $orderEntryDescriptions = $this->getOrderEntryDescriptions($database, $transactionNumber);
 
-    //     foreach ($customersS1 as $customer) {
-    //         $this->generateStatement('mssql-squareone', $customer->ID);
-    //     }
+        if (isset($orderEntryDescriptions[0])) {
+            $order = $this->getOrder($database, $orderEntryDescriptions[0]->OrderID);
+            $data['orderEntry'] = $orderEntryDescriptions;
+            $data['order'] = $order;
+        }
 
-    //     foreach ($customersTO as $customer) {
-    //         $this->generateStatement('mssql-toronto', $customer->ID);
-    //     }
-    // }
+        if (isset($lineItemsForTransaction[0])) {
+            $data['lineItems'] = $lineItemsForTransaction;
+        }
+
+
+        $data['transaction'] = $transaction;
+        $data['transactionNumber'] = $transactionNumber;
+        $data['customerId'] = $customerId;
+        $data['account'] = $customer;
+
+        $view = View::make('emails.statement.receipt', $data);
+
+        $receipt = (string) $view;
+
+        return $receipt;
+    }
+
+    public function mailReceipts($receipts, $email)
+    {
+        $data['receipts'] = $receipts['receipts'];
+
+        $mailto = array(
+            'email' => $email
+        );
+
+        Mail::send('emails.statement.combinedreceipt', $data, function ($message) use ($mailto) {
+            $message->from('service@techknowspace.com', 'Accounts Receivable - The TechKnow Space');
+            $message->to($mailto['email'])->subject('Your Receipt');
+
+            // $size = sizeOf($mailto['path']);
+
+            // for($i=0; $i < $size; $i++){
+                // $message->attach($mailto['path'][$i]);
+                // $message->attach($mailto['attachment']);
+            // }
+        });
+        // return View::make('emails.statement.combinedreceipt', $data);
+    }
 
     public function accountStatementCron()
     {
+        $query = "SELECT * FROM Customer WHERE (AccountNumber = 'TEST-ACCOUNT-1' OR AccountNumber = 'TEST-ACCOUNT-2' OR AccountNumber = 'TEST-ACCOUNT-3')";
         // $customersS1 = DB::connection('mssql-squareone')->select("SELECT * FROM Customer WHERE Balance > 0");
         // $customersTO = DB::connection('mssql-toronto')->select("SELECT * FROM Customer WHERE Balance > 0");
-        $customersS1 = DB::connection('mssql-squareone')->select("SELECT * FROM Customer WHERE AccountNumber = '905 897 9860'");
-        $customersTO = DB::connection('mssql-toronto')->select("SELECT * FROM Customer WHERE AccountNumber = '905 897 9860'");
+        $customersS1 = DB::connection('mssql-squareone')->select($query);
+        $customersTO = DB::connection('mssql-toronto')->select($query);
 
         $statements = [];
 
         foreach ($customersS1 as $customer) {
             $rendered = $this->generateStatement('mssql-squareone', $customer->ID);
-            $statements[$customer->EmailAddress]['statement'][] = $rendered[0];
-            $statements[$customer->EmailAddress]['attachment'][] = $rendered[2];
-            $statements[$customer->EmailAddress]['pdf'][] = $rendered[3];
+            // $statements[$customer->EmailAddress]['statement'][] = $rendered[0];
+            $statements[$customer->EmailAddress]['pdf'][] = $rendered[2];
             $statements[$customer->EmailAddress]['balance'] = $rendered[1];
         }
 
         foreach ($customersTO as $customer) {
             $rendered = $this->generateStatement('mssql-toronto', $customer->ID);
-            $statements[$customer->EmailAddress]['statement'][] = $rendered[0];
-            $statements[$customer->EmailAddress]['attachment'][] = $rendered[2];
-            $statements[$customer->EmailAddress]['pdf'][] = $rendered[3];
+            // $statements[$customer->EmailAddress]['statement'][] = $rendered[0];
+            $statements[$customer->EmailAddress]['pdf'][] = $rendered[2];
 
             if (isset($statements[$customer->EmailAddress]['balance'])) {
                 $statements[$customer->EmailAddress]['balance'] = $statements[$customer->EmailAddress]['balance'] + $rendered[1];
@@ -51,72 +116,44 @@ class StatementController extends BaseController {
         }
 
         foreach ($statements as $email => $statement) {
-            return $this->sendConsolidatedStatements($email, $statement);
-            // print_r($statement);
-        }
-
-    }
-
-    public function accountReceiptCron()
-    {
-        $customersS1 = DB::connection('mssql-squareone')->select("SELECT * FROM Customer WHERE Balance > 0");
-        $customersTO = DB::connection('mssql-toronto')->select("SELECT * FROM Customer WHERE Balance > 0");
-
-        foreach ($customersS1 as $customer) {
-            $this->generateStatement('mssql-squareone', $customer->ID);
-        }
-
-        foreach ($customersTO as $customer) {
-            $this->generateStatement('mssql-toronto', $customer->ID);
+            // $this->sendConsolidatedStatements($email, $statement);
+            var_dump($statements);
         }
     }
 
     public function sendConsolidatedStatements($email, $statements)
     {
-        $paths = $statements['attachment'];
+        // $data['statements'] = $statements['statement'];
+        $data['balance'] = $statements['balance'];
+        $data['pdf'] = $statements['pdf'];
+        $data['month'] = date('F');
+
+        $storagePath = storage_path().'/';
+        $fileName = $email.'-statement.pdf';
+        $fullInvoicePath = $storagePath.$fileName;
+
+        PDF::loadView('emails.statement.combinedstatement', $data)->save($fullInvoicePath);
+
         $mailto = array(
             'email' => $email,
-            'path' => $paths
+            'attachment' => $fullInvoicePath
         );
 
-        $data['statements'] = $statements['statement'];
-        $data['balance'] = $statements['balance'];
-
-
-        Mail::send('emails.statement.combinedstatement', $data, function ($message) use ($mailto) {
-            $message->from('service@techknowspace.com', 'TechKnow Space');
+        Mail::send('emails.statement.finalstatement', $data, function ($message) use ($mailto) {
+            $message->from('service@techknowspace.com', 'Accounts Receivable - The TechKnow Space');
             $message->to($mailto['email'])->subject('Account Statement');
 
-            $size = sizeOf($mailto['path']);
+            // $size = sizeOf($mailto['path']);
 
-            for($i=0; $i < $size; $i++){
-                $message->attach($mailto['path'][$i]);
-            }
+            // for($i=0; $i < $size; $i++){
+                // $message->attach($mailto['path'][$i]);
+                $message->attach($mailto['attachment']);
+            // }
         });
 
-        return View::make('emails.statement.combinedstatement', $data);
+        // return View::make('emails.statement.finalstatement', $data);
     }
 
-    public function generateReceipt($customerId, $transactionNumber)
-    {
-        $database = 'mssql-squareone';
-
-        $customer = $this->getCustomer($database, $customerId);
-        $transaction = $this->getTransaction($database, $transactionNumber);
-        $lineItemsForTransaction = $this->getTransactionLineItems($database, $transactionNumber);
-        $orderEntryDescriptions = $this->getOrderEntryDescriptions($database, $transactionNumber);
-        $order = $this->getOrder($database, $orderEntryDescriptions[0]->OrderID);
-
-        $data['transaction'] = $transaction;
-        $data['transactionNumber'] = $transactionNumber;
-        $data['customerId'] = $customerId;
-        $data['account'] = $customer;
-        $data['lineItems'] = $lineItemsForTransaction;
-        $data['orderEntry'] = $orderEntryDescriptions;
-        $data['order'] = $order;
-
-        return View::make('emails.statement.receipt', $data);
-    }
 
     public function generateStatement($database, $customerId)
     {
@@ -130,7 +167,7 @@ class StatementController extends BaseController {
         // test customerId
         $customer = $this->getCustomer($database, $customerId);
 
-        $startDate = date('M j Y', strtotime("first day of last month +15 days"));
+        $startDate = date('M j Y', strtotime("first day of last month days"));
         $endDate = date('M j Y', strtotime("tomorrow"));
 
         $startDateString = "$startDate 12:00:00:000AM";
@@ -171,11 +208,11 @@ class StatementController extends BaseController {
         $data['receivableHistory'] = $receivableHistory;
         $data['location'] = $location;
 
-        $storagePath = storage_path().'/';
-        $fileName = $customerId.'-statement.pdf';
-        $fullInvoicePath = $storagePath.$fileName;
+        // $storagePath = storage_path().'/';
+        // $fileName = $customerId.'-statement.pdf';
+        // $fullInvoicePath = $storagePath.$fileName;
 
-        PDF::loadView('emails.statement.accountstatement-pdf', $data)->save($fullInvoicePath);
+        // PDF::loadView('emails.statement.accountstatement-pdf', $data)->save($fullInvoicePath);
 
         $view = View::make('emails.statement.accountstatement', $data);
         $contents = (string) $view;
@@ -183,7 +220,7 @@ class StatementController extends BaseController {
         $pdfview = View::make('emails.statement.accountstatement-pdf', $data);
         $pdfcontents = (string) $pdfview;
 
-        return array($contents, $customer->AccountBalance, $fullInvoicePath, $pdfcontents);
+        return array($contents, $customer->AccountBalance, $pdfcontents);
     }
 
 
@@ -290,11 +327,18 @@ class StatementController extends BaseController {
         $query = "SELECT
                     ISNULL(Item.ItemLookupCode, '') AS ItemLookupCode,
                     ISNULL(Item.Description, '') AS Description,
-                    TransactionEntry.Comment
+                    TransactionEntry.Comment,
+                    TransactionEntry.Price
                   FROM TransactionEntry
                   LEFT OUTER JOIN Item
                     ON TransactionEntry.ItemID = Item.ID
                   WHERE (TransactionEntry.TransactionNumber = $transactionNumber)
+                  AND ItemID NOT IN (
+                    SELECT OrderEntry.ItemID FROM OrderEntry, TransactionEntry, OrderHistory
+                    WHERE TransactionEntry.TransactionNumber = $transactionNumber
+                    AND OrderHistory.TransactionNumber = $transactionNumber
+                    AND OrderHistory.OrderID = OrderEntry.OrderID
+                  )
                   ORDER BY TransactionEntry.ID";
 
         $items = DB::connection($database)->select($query);

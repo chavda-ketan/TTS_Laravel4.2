@@ -218,13 +218,7 @@ td {
 </style>
 </head>
 
-<body bgcolor="#fff">
-<!-- body -->
-
-@foreach ($pdf as $statement)
-{{ $statement }}
-@endforeach
-
+<body bgcolor="#f6f6f6">
 <table class="body-wrap" bgcolor="#f6f6f6">
     <tr>
         <td></td>
@@ -233,8 +227,10 @@ td {
             <!-- remittance -->
             <div class="content">
                 <p style="font-size: 15px">
-                    <h3 style="font-size: 120%">Total Amount Owing: ${{ number_format((float) $balance, 2, '.', '') }}</h3><br/>
-                    Please remit payment to: <b style="font-size: 110%">The TechKnow Space Inc.</b><br/>
+                    Please find attached your {{ $month }} end-of-month statement. This includes transactions completed at all our locations.<br/><br/>
+                    Statement balances are due by the 15th of the following month.<br/><br/>
+                    Please remit your payment in the amount of ${{ number_format((float) $balance, 2, '.', '') }} to:<br/><br/>
+                    <b style="font-size: 110%">The TechKnow Space Inc.</b><br/>
                     33 City Centre Dr Unit #142<br/>
                     Mississauga, ON L5B 2N5<br/>
                 </p>
@@ -245,7 +241,5 @@ td {
         <td></td>
     </tr>
 </table>
-<!-- /body -->
-
 </body>
 </html>
