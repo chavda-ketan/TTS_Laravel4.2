@@ -2,15 +2,14 @@
 
 class StatementController extends BaseController {
 
-//Samsung Electronics Canada Inc
-
     public function accountReceiptCron()
     {
         $query = "SELECT * FROM Customer, [Transaction]
                   WHERE (AccountNumber = 'TEST-ACCOUNT-1' OR AccountNumber = 'TEST-ACCOUNT-2' OR AccountNumber = 'TEST-ACCOUNT-3')
                   AND [Transaction].CustomerID = Customer.ID
                   AND [Transaction].Time >= dateadd(day,datediff(day,1,GETDATE()),0)
-                  AND [Transaction].Time < dateadd(day,datediff(day,0,GETDATE()),0)";
+                  AND [Transaction].Time < dateadd(day,datediff(day,0,GETDATE()),0)
+                  AND Company != 'Samsung Electronics Canada Inc'";
 
         $customersS1 = DB::connection('mssql-squareone')->select($query);
         $customersTO = DB::connection('mssql-toronto')->select($query);
@@ -88,7 +87,8 @@ class StatementController extends BaseController {
 
     public function accountStatementCron()
     {
-        $query = "SELECT * FROM Customer WHERE (AccountNumber = 'TEST-ACCOUNT-1' OR AccountNumber = 'TEST-ACCOUNT-2' OR AccountNumber = 'TEST-ACCOUNT-3')";
+        $query = "SELECT * FROM Customer WHERE AccountBalance > 0";
+        // $query = "SELECT * FROM Customer WHERE (AccountNumber = 'TEST-ACCOUNT-1' OR AccountNumber = 'TEST-ACCOUNT-2' OR AccountNumber = 'TEST-ACCOUNT-3')";
         // $customersS1 = DB::connection('mssql-squareone')->select("SELECT * FROM Customer WHERE Balance > 0");
         // $customersTO = DB::connection('mssql-toronto')->select("SELECT * FROM Customer WHERE Balance > 0");
         $customersS1 = DB::connection('mssql-squareone')->select($query);
@@ -116,9 +116,11 @@ class StatementController extends BaseController {
         }
 
         foreach ($statements as $email => $statement) {
-            // $this->sendConsolidatedStatements($email, $statement);
+            $this->sendConsolidatedStatements($email, $statement);
             var_dump($statements);
         }
+
+        return 'ok';
     }
 
     public function sendConsolidatedStatements($email, $statements)
@@ -135,13 +137,15 @@ class StatementController extends BaseController {
         PDF::loadView('emails.statement.combinedstatement', $data)->save($fullInvoicePath);
 
         $mailto = array(
+            // 'email' => 'kirtaner@420chan.org',
             'email' => $email,
             'attachment' => $fullInvoicePath
         );
 
         Mail::send('emails.statement.finalstatement', $data, function ($message) use ($mailto) {
-            $message->from('service@techknowspace.com', 'Accounts Receivable - The TechKnow Space');
-            $message->to($mailto['email'])->subject('Account Statement');
+            $message->from('service@mg.techknowspace.com', 'Accounts Receivable - The TechKnow Space');
+            // $message->to($mailto['email'])->subject('Account Statement');
+            $message->to('nikita@techknowspace.com')->cc('jason@techknowspace.com')->subject('Account Statement');
 
             // $size = sizeOf($mailto['path']);
 
@@ -167,7 +171,7 @@ class StatementController extends BaseController {
         // test customerId
         $customer = $this->getCustomer($database, $customerId);
 
-        $startDate = date('M j Y', strtotime("first day of last month days"));
+        $startDate = date('M j Y', strtotime("first day of last month"));
         $endDate = date('M j Y', strtotime("tomorrow"));
 
         $startDateString = "$startDate 12:00:00:000AM";
@@ -286,8 +290,8 @@ class StatementController extends BaseController {
                   INNER JOIN AccountReceivable
                     ON AccountReceivable.ID = AccountReceivableHistory.AccountReceivableID
                   WHERE (CustomerID = $customerId)
-                  AND (AccountReceivableHistory.Date >= '$startDate')
-                  AND (AccountReceivableHistory.Date < '$endDate')
+                  -- AND (AccountReceivableHistory.Date >= '$startDate')
+                  -- AND (AccountReceivableHistory.Date < '$endDate')
                   AND (AccountReceivable.TransactionNumber != 0)
                   ORDER BY AccountReceivableHistory.Date";
 

@@ -70,8 +70,8 @@
 
                                     <td style="width: 25%">
                                         Previous Balance: <br/>
-                                        New Charges: <br/>
-                                        Credits / Payments: <br/>
+                                        Add New Charges: <br/>
+                                        Less Credits / Payments: <br/>
                                         =======================<br/>
                                         New Balance: <br/>
                                     </td>
