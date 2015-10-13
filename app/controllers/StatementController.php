@@ -2,10 +2,56 @@
 
 class StatementController extends BaseController {
 
+    public function outstandingBalances()
+    {
+        $data['toronto'] = $this->getCreditCustomers('mssql-toronto');
+        $data['mississauga'] = $this->getCreditCustomers('mssql-squareone');
+
+        return View::make('records.outstandingbalances', $data);
+    }
+
+    public function creditCustomers()
+    {
+        $toronto = $this->getCreditCustomers('mssql-toronto');
+        $mississauga = $this->getCreditCustomers('mssql-squareone');
+
+        $creditCustomers = [];
+
+        foreach ($toronto as $customer) {
+
+            $creditCustomers[$customer->EmailAddress] = $customer;
+
+        }
+
+        foreach ($mississauga as $customer) {
+
+            if (isset($creditCustomers[$customer->EmailAddress])) {
+                // $creditCustomers[$customer->EmailAddress] = (object) array_merge((array) $customer, (array) $creditCustomers[$customer->EmailAddress]);
+                // $creditCustomers[$customer->EmailAddress] = (object) array_merge((array) $creditCustomers[$customer->EmailAddress], (array) $customer);
+
+                $creditCustomers[$customer->EmailAddress]->CreditLimit =
+                    $creditCustomers[$customer->EmailAddress]->CreditLimit + $customer->CreditLimit;
+                $creditCustomers[$customer->EmailAddress]->AccountBalance =
+                    $creditCustomers[$customer->EmailAddress]->AccountBalance + $customer->AccountBalance;
+                $creditCustomers[$customer->EmailAddress]->TotalSales = $creditCustomers[$customer->EmailAddress]->TotalSales + $customer->TotalSales;
+
+            } else {
+
+                $creditCustomers[$customer->EmailAddress] = $customer;
+
+            }
+
+        }
+
+        $data['customers'] = $creditCustomers;
+
+        return View::make('records.creditcustomers', $data);
+    }
+
     public function accountReceiptCron()
     {
         $query = "SELECT * FROM Customer, [Transaction]
-                  WHERE (AccountNumber = 'TEST-ACCOUNT-1' OR AccountNumber = 'TEST-ACCOUNT-2' OR AccountNumber = 'TEST-ACCOUNT-3')
+                  WHERE Customer.CreditLimit > 0
                   AND [Transaction].CustomerID = Customer.ID
                   AND [Transaction].Time >= dateadd(day,datediff(day,1,GETDATE()),0)
                   AND [Transaction].Time < dateadd(day,datediff(day,0,GETDATE()),0)
@@ -19,11 +65,19 @@ class StatementController extends BaseController {
         foreach ($customersS1 as $customer) {
             $rendered = $this->generateReceipt('mssql-squareone', $customer->ID, $customer->TransactionNumber);
             $receipts[$customer->EmailAddress]['receipts'][] = $rendered;
+
+            if (isset($customer->CustomField3)) {
+                $receipts[$customer->EmailAddress]['cc'] = $customer->CustomField3;
+            }
         }
 
         foreach ($customersTO as $customer) {
             $rendered = $this->generateReceipt('mssql-toronto', $customer->ID, $customer->TransactionNumber);
             $receipts[$customer->EmailAddress]['receipts'][] = $rendered;
+
+            if (isset($customer->CustomField3)) {
+                $receipts[$customer->EmailAddress]['cc'] = $customer->CustomField3;
+            }
         }
 
         foreach ($receipts as $email => $receipt) {
@@ -50,14 +104,18 @@ class StatementController extends BaseController {
             $data['lineItems'] = $lineItemsForTransaction;
         }
 
-
         $data['transaction'] = $transaction;
         $data['transactionNumber'] = $transactionNumber;
         $data['customerId'] = $customerId;
         $data['account'] = $customer;
 
-        $view = View::make('emails.statement.receipt', $data);
+        $storagePath = storage_path().'/';
+        $fileName = $customer->EmailAddress.'-receipt.pdf';
+        $fullReceiptPath = $storagePath.$fileName;
 
+        PDF::loadView('emails.statement.receipt', $data)->save($fullReceiptPath);
+
+        $view = View::make('emails.statement.receipt', $data);
         $receipt = (string) $view;
 
         return $receipt;
@@ -71,26 +129,26 @@ class StatementController extends BaseController {
             'email' => $email
         );
 
+        if (isset($receipts['cc'])) {
+            $mailto['cc'] = $receipts['cc'];
+        }
+
         Mail::send('emails.statement.combinedreceipt', $data, function ($message) use ($mailto) {
             $message->from('service@techknowspace.com', 'Accounts Receivable - The TechKnow Space');
+            // $message->to('acottle@taimalabs.com')->subject('Your Receipt');
             $message->to($mailto['email'])->subject('Your Receipt');
-
-            // $size = sizeOf($mailto['path']);
-
-            // for($i=0; $i < $size; $i++){
-                // $message->attach($mailto['path'][$i]);
-                // $message->attach($mailto['attachment']);
-            // }
+            $message->cc('b2badmin@techknowspace.com');
+            if (isset($mailto['cc'])) {
+                $message->cc($mailto['cc']);
+            }
         });
-        // return View::make('emails.statement.combinedreceipt', $data);
     }
 
     public function accountStatementCron()
     {
-        $query = "SELECT * FROM Customer WHERE AccountBalance > 0";
-        // $query = "SELECT * FROM Customer WHERE (AccountNumber = 'TEST-ACCOUNT-1' OR AccountNumber = 'TEST-ACCOUNT-2' OR AccountNumber = 'TEST-ACCOUNT-3')";
-        // $customersS1 = DB::connection('mssql-squareone')->select("SELECT * FROM Customer WHERE Balance > 0");
-        // $customersTO = DB::connection('mssql-toronto')->select("SELECT * FROM Customer WHERE Balance > 0");
+        $query = "SELECT * FROM Customer WHERE CreditLimit > 0 AND Company = 'StatPro Canada'";
+        // $query = "SELECT * FROM Customer WHERE AccountBalance > 0";
+
         $customersS1 = DB::connection('mssql-squareone')->select($query);
         $customersTO = DB::connection('mssql-toronto')->select($query);
 
@@ -100,24 +158,33 @@ class StatementController extends BaseController {
             $rendered = $this->generateStatement('mssql-squareone', $customer->ID);
             // $statements[$customer->EmailAddress]['statement'][] = $rendered[0];
             $statements[$customer->EmailAddress]['pdf'][] = $rendered[2];
+            $statements[$customer->EmailAddress]['name'] = $customer->Company;
+
             $statements[$customer->EmailAddress]['balance'] = $rendered[1];
+            if (isset($customer->CustomField3)) {
+                $statements[$customer->EmailAddress]['cc'] = $customer->CustomField3;
+            }
         }
 
         foreach ($customersTO as $customer) {
             $rendered = $this->generateStatement('mssql-toronto', $customer->ID);
             // $statements[$customer->EmailAddress]['statement'][] = $rendered[0];
             $statements[$customer->EmailAddress]['pdf'][] = $rendered[2];
+            $statements[$customer->EmailAddress]['name'] = $customer->Company;
 
             if (isset($statements[$customer->EmailAddress]['balance'])) {
                 $statements[$customer->EmailAddress]['balance'] = $statements[$customer->EmailAddress]['balance'] + $rendered[1];
             } else {
                 $statements[$customer->EmailAddress]['balance'] = $rendered[1];
             }
+
+            if (isset($customer->CustomField3)) {
+                $statements[$customer->EmailAddress]['cc'] = $customer->CustomField3;
+            }
         }
 
         foreach ($statements as $email => $statement) {
             $this->sendConsolidatedStatements($email, $statement);
-            var_dump($statements);
         }
 
         return 'ok';
@@ -137,29 +204,51 @@ class StatementController extends BaseController {
         PDF::loadView('emails.statement.combinedstatement', $data)->save($fullInvoicePath);
 
         $mailto = array(
-            // 'email' => 'kirtaner@420chan.org',
             'email' => $email,
-            'attachment' => $fullInvoicePath
+            'attachment' => $fullInvoicePath,
+            'name' => $statements['name']
         );
+
+        if (isset($statements['cc'])) {
+            $mailto['cc'] = $statements['cc'];
+        }
 
         Mail::send('emails.statement.finalstatement', $data, function ($message) use ($mailto) {
             $message->from('service@mg.techknowspace.com', 'Accounts Receivable - The TechKnow Space');
-            // $message->to($mailto['email'])->subject('Account Statement');
-            $message->to('nikita@techknowspace.com')->cc('jason@techknowspace.com')->subject('Account Statement');
+            // $message->to($mailto['email'])->subject('Account Statement - '.$mailto['name']);
+            // $message->cc('b2badmin@techknowspace.com');
+
+            // if (isset($mailto['cc'])) {
+            //     $message->cc($mailto['cc']);
+            // }
+
+            $message->attach($mailto['attachment']);
+            // $message->cc('b2badmin@techknowspace.com');
+
+            $message->to('b2badmin@techknowspace.com')->subject('Account Statement - '.$mailto['name']);
 
             // $size = sizeOf($mailto['path']);
-
             // for($i=0; $i < $size; $i++){
                 // $message->attach($mailto['path'][$i]);
-                $message->attach($mailto['attachment']);
             // }
         });
 
-        // return View::make('emails.statement.finalstatement', $data);
     }
 
+    public function testNorthbridge()
+    {
+        $customerId = 21644;
 
-    public function generateStatement($database, $customerId)
+        $statement = $this->generateStatement('mssql-squareone',$customerId, 0);
+
+        $data['balance'] = $statement[1];
+        $data['pdf'][] = $statement[2];
+        $data['month'] = date('F');
+
+        return View::make('emails.statement.combinedstatement', $data);
+    }
+
+    public function generateStatement($database, $customerId, $debug = false)
     {
         if ($database == 'mssql-toronto') {
             $location = 'Toronto';
@@ -167,8 +256,6 @@ class StatementController extends BaseController {
             $location = 'Mississauga';
         }
 
-        // $customerId = 22261;
-        // test customerId
         $customer = $this->getCustomer($database, $customerId);
 
         $startDate = date('M j Y', strtotime("first day of last month"));
@@ -178,11 +265,16 @@ class StatementController extends BaseController {
         $endDateString = "$endDate 12:00:00:000AM";
 
         $receivableHistory = $this->getAccountReceivableHistoryForCustomer($database, $customerId, $startDateString, $endDateString);
-        $latestTransaction = $this->getAccountReceivableLatestTransactionForCustomer($database, $customerId, $startDateString, $endDateString);
+        // $alternateReceivableHistory = $this->getAlternateAccountReceivableHistoryForCustomer($database, $customerId, $startDateString, $endDateString);
+        $paymentHistory = $this->getPaymentHistoryForCustomer($database, $customerId, $startDateString, $endDateString);
+
+        $latestTransaction = $this->getAccountReceivableLatestTransactionAmountForCustomer($database, $customerId, $startDateString, $endDateString);
 
         $data['transactions'] = [];
+        $data['payments'] = [];
 
         $balance = 0;
+        $payments = 0;
 
         foreach ($receivableHistory as $invoice) {
             $accountReceivableID = $invoice->AccountReceivableID;
@@ -199,18 +291,23 @@ class StatementController extends BaseController {
             $data['transactions'][$transactionNumber]['newBalance'] = $balance;
         }
 
-        if ($latestTransaction->Amount > 0) {
-            $data['newCharges'] = number_format($latestTransaction->Amount, 2, '.', '');
-            $data['newPayments'] = number_format(0.00, 2, '.', '');
-        } else {
-            $data['newCharges'] = number_format(0.00, 2, '.', '');
-            $data['newPayments'] = number_format($latestTransaction->Amount, 2, '.', '');
+        foreach ($paymentHistory as $payment) {
+            $payments = $payments + $payment->Amount;
+            $data['payments'][$payment->FormattedDate]['amount'] = number_format($payment->Amount, 2, '.', '');
         }
+
+        if ($payments < 0) {
+            $payments = 0;
+        }
+
+        $data['newCharges'] = number_format($latestTransaction, 2, '.', '');
+        $data['newPayments'] = number_format($payments, 2, '.', '');
 
         // package the data for the template
         $data['account'] = $customer;
         $data['receivableHistory'] = $receivableHistory;
         $data['location'] = $location;
+        $data['totalCharges'] = $balance;
 
         // $storagePath = storage_path().'/';
         // $fileName = $customerId.'-statement.pdf';
@@ -227,11 +324,122 @@ class StatementController extends BaseController {
         return array($contents, $customer->AccountBalance, $pdfcontents);
     }
 
-
-    public function overdueNotification($database, $customerId)
+    // make these two a bit cleaner later
+    public function overdue()
     {
-        $data = [];
-        return View::make('emails.statement.overdue', $data);
+        $toronto = $this->getOverdueCreditCustomers('mssql-toronto');
+        $mississauga = $this->getOverdueCreditCustomers('mssql-squareone');
+
+        $combined = array();
+
+        $cutoff = date('M j Y', strtotime("first day of this month"));
+        $cutoffString = "$cutoff 12:00:00:000AM";
+
+        foreach ($mississauga as $customer) {
+            $realBalance = $customer->AccountBalance - $this->getAccountReceivableSumForCustomer('mssql-squareone', $customer->ID, $cutoffString);
+            $combined[$customer->EmailAddress]['ID'] = $customer->ID;
+            $combined[$customer->EmailAddress]['AccountNumber'] = $customer->AccountNumber;
+            $combined[$customer->EmailAddress]['balance'] = $realBalance;
+        }
+
+        foreach ($toronto as $customer) {
+            $realBalance = $customer->AccountBalance - $this->getAccountReceivableSumForCustomer('mssql-toronto', $customer->ID, $cutoffString);
+
+            $combined[$customer->EmailAddress]['ID'] = $customer->ID;
+            $combined[$customer->EmailAddress]['AccountNumber'] = $customer->AccountNumber;
+
+            if (isset($combined[$customer->EmailAddress]['balance'])) {
+                $combined[$customer->EmailAddress]['balance'] = $combined[$customer->EmailAddress]['balance'] + $realBalance;
+            } else {
+                $combined[$customer->EmailAddress]['balance'] = $realBalance;
+            }
+        }
+
+        foreach ($combined as $email => $customer) {
+            if ($customer['balance'] > 0.01) {
+                $this->sendOverdueNotification($email, $customer['AccountNumber'], $customer['balance']);
+                // var_dump($customer);
+            }
+        }
+
+        return 'ok';
+    }
+
+    public function overdueAdmin()
+    {
+        $toronto = $this->getOverdueCreditCustomers('mssql-toronto');
+        $mississauga = $this->getOverdueCreditCustomers('mssql-squareone');
+
+        $combined = array();
+
+        $cutoff = date('M j Y', strtotime("first day of this month"));
+        $cutoffString = "$cutoff 12:00:00:000AM";
+
+        foreach ($mississauga as $customer) {
+            $realBalance = $customer->AccountBalance - $this->getAccountReceivableSumForCustomer('mssql-squareone', $customer->ID, $cutoffString);
+            $combined[$customer->EmailAddress]['ID'] = $customer->ID;
+            $combined[$customer->EmailAddress]['AccountNumber'] = $customer->AccountNumber;
+            $combined[$customer->EmailAddress]['balance'] = $realBalance;
+        }
+
+        foreach ($toronto as $customer) {
+            $realBalance = $customer->AccountBalance - $this->getAccountReceivableSumForCustomer('mssql-toronto', $customer->ID, $cutoffString);
+
+            $combined[$customer->EmailAddress]['ID'] = $customer->ID;
+            $combined[$customer->EmailAddress]['AccountNumber'] = $customer->AccountNumber;
+
+            if (isset($combined[$customer->EmailAddress]['balance'])) {
+                $combined[$customer->EmailAddress]['balance'] = $combined[$customer->EmailAddress]['balance'] + $realBalance;
+            } else {
+                $combined[$customer->EmailAddress]['balance'] = $realBalance;
+            }
+        }
+
+        foreach ($combined as $email => $customer) {
+            if ($customer['balance'] > 0.01) {
+                $this->sendOverdueAdminNotification($email, $customer['AccountNumber'], $customer['balance']);
+                // var_dump($customer);
+            }
+        }
+
+        return 'ok';
+    }
+
+
+    public function sendOverdueNotification($email, $accountNumber, $accountBalance)
+    {
+        $data['accountNumber'] = $accountNumber;
+        $data['accountBalance'] = $accountBalance;
+
+        $mailto = array(
+            'email' => $email
+        );
+
+        Mail::send('emails.statement.overdue', $data, function ($message) use ($mailto) {
+            $message->from('service@mg.techknowspace.com', 'Accounts Receivable - The TechKnow Space');
+            $message->to($mailto['email'])->subject('Outstanding Balance');
+            $message->cc('b2badmin@techknowspace.com');
+
+            // $message->to('jason@techknowspace.com')->subject('Outstanding Balance');
+        });
+
+    }
+
+    public function sendOverdueAdminNotification($email, $accountNumber, $accountBalance)
+    {
+        $data['accountNumber'] = $accountNumber;
+        $data['accountBalance'] = $accountBalance;
+
+        $mailto = array(
+            'email' => $email
+        );
+
+        Mail::send('emails.statement.overdueadmin', $data, function ($message) use ($mailto) {
+            $message->from('service@mg.techknowspace.com', 'Accounts Receivable - The TechKnow Space');
+            $message->to('b2badmin@techknowspace.com')->subject('OVERDUE Balance');
+            // $message->to('jason@techknowspace.com')->subject('Outstanding Balance');
+        });
+
     }
 
 
@@ -243,16 +451,44 @@ class StatementController extends BaseController {
         return $customer;
     }
 
-    public function blobTest()
+    public function getPaymentHistoryForCustomer($database, $customerId, $startDate, $endDate)
     {
-        $data = DB::connection('mssql-squareone')->select("SELECT TOP 1 ReceiptCompressed FROM [dbo].[Journal] ORDER BY ID Desc ")[0];
-        return $data->ReceiptCompressed;
+        $query = "SELECT *,
+                  REPLACE(CONVERT(NVARCHAR, [Time], 103), ' ', '/') AS FormattedDate
+                  FROM Payment
+                  WHERE CustomerID = $customerId
+                  AND (Time >= '$startDate')
+                  AND (Time < '$endDate')";
+
+        $entries = DB::connection($database)->select($query);
+
+        return $entries;
     }
+
+    public function getAccountReceivableSumForCustomer($database, $customerId, $cutoffDate)
+    {
+        $query = "SELECT COALESCE( (
+                    SELECT SUM(AccountReceivableHistory.Amount)
+                    FROM AccountReceivableHistory
+                    INNER JOIN AccountReceivable
+                      ON AccountReceivable.ID = AccountReceivableHistory.AccountReceivableID
+                    WHERE AccountReceivableHistory.Date > '$cutoffDate'
+                    AND AccountReceivableHistory.Amount > 0
+                    AND AccountReceivable.CustomerID = $customerId
+                    AND AccountReceivable.TransactionNumber != 0
+                    HAVING (SUM(AccountReceivableHistory.Amount) <> 0)
+                    OR (MAX(AccountReceivableHistory.Date) > '$cutoffDate')
+                  ), 0) AS Balance";
+
+        $amount = DB::connection($database)->select($query)[0]->Balance;
+
+        return $amount;
+    }
+
 
     public function getAccountReceivableHistoryForCustomer($database, $customerId, $startDate, $endDate)
     {
         $query = "SELECT
-                    0 AS StoreID,
                     AccountReceivableHistory.AccountReceivableID,
                     SUM(AccountReceivableHistory.Amount) AS Balance,
                     AccountReceivableHistory.AccountReceivableID,
@@ -260,14 +496,12 @@ class StatementController extends BaseController {
                     MAX(AccountReceivable.TransactionNumber) AS TransactionNumber,
                     MAX(AccountReceivable.Date) AS [Date],
                     MAX(AccountReceivable.DueDate) AS DueDate,
-                    MAX(AccountReceivable.OriginalAmount) AS OriginalAmount,
-                    '' AS ReferenceNumber,
-                    '' AS StoreName,
-                    '' AS StoreCode
+                    MAX(AccountReceivable.OriginalAmount) AS OriginalAmount
                   FROM AccountReceivableHistory
                   INNER JOIN AccountReceivable
                     ON AccountReceivable.ID = AccountReceivableHistory.AccountReceivableID
                   WHERE AccountReceivableHistory.Date < '$endDate'
+                  AND AccountReceivable.Date > '$startDate'
                   AND AccountReceivable.CustomerID = $customerId
                   AND AccountReceivable.TransactionNumber != 0
                   GROUP BY AccountReceivableHistory.AccountReceivableID
@@ -280,9 +514,9 @@ class StatementController extends BaseController {
         return $entries;
     }
 
-    public function getAccountReceivableLatestTransactionForCustomer($database, $customerId, $startDate, $endDate)
+    public function getAlternateAccountReceivableHistoryForCustomer($database, $customerId, $startDate, $endDate)
     {
-        $query = "SELECT TOP 1
+        $query = "SELECT
                     AccountReceivableHistory.*,
                     AccountReceivable.Type AS AccountReceivableType,
                     AccountReceivable.TransactionNumber
@@ -290,12 +524,52 @@ class StatementController extends BaseController {
                   INNER JOIN AccountReceivable
                     ON AccountReceivable.ID = AccountReceivableHistory.AccountReceivableID
                   WHERE (CustomerID = $customerId)
-                  -- AND (AccountReceivableHistory.Date >= '$startDate')
-                  -- AND (AccountReceivableHistory.Date < '$endDate')
+                  AND (AccountReceivableHistory.Date >= '$startDate')
+                  AND (AccountReceivableHistory.Date < '$endDate')
                   AND (AccountReceivable.TransactionNumber != 0)
                   ORDER BY AccountReceivableHistory.Date";
 
-        $entry = DB::connection($database)->select($query)[0];
+        $entries = DB::connection($database)->select($query);
+
+        return $entries;
+    }
+
+    public function getAccountReceivableLatestTransactionForCustomer($database, $customerId, $startDate, $endDate)
+    {
+        $query = "SELECT COALESCE( (
+                    SELECT TOP 1
+                    AccountReceivableHistory.*,
+                    AccountReceivable.Type AS AccountReceivableType,
+                    AccountReceivable.TransactionNumber
+                  FROM AccountReceivableHistory
+                  INNER JOIN AccountReceivable
+                    ON AccountReceivable.ID = AccountReceivableHistory.AccountReceivableID
+                  WHERE (CustomerID = $customerId)
+                  AND (AccountReceivableHistory.Date >= '$startDate')
+                  AND (AccountReceivableHistory.Date < '$endDate')
+                  AND (AccountReceivable.TransactionNumber != 0)
+                  ORDER BY AccountReceivableHistory.Date DESC), 0) AS Amount";
+
+        $entry = DB::connection($database)->select($query)[0]->Amount;
+
+        return $entry;
+    }
+
+    public function getAccountReceivableLatestTransactionAmountForCustomer($database, $customerId, $startDate, $endDate)
+    {
+        $query = "SELECT COALESCE( (
+                    SELECT SUM(AccountReceivableHistory.Amount)
+                  FROM AccountReceivableHistory
+                  INNER JOIN AccountReceivable
+                    ON AccountReceivable.ID = AccountReceivableHistory.AccountReceivableID
+                  WHERE (CustomerID = $customerId)
+                  AND (AccountReceivableHistory.Amount > 0)
+                  AND (AccountReceivableHistory.Date >= '$startDate')
+                  AND (AccountReceivableHistory.Date < '$endDate')
+                  AND (AccountReceivable.TransactionNumber != 0)
+                  ), 0) AS Amount";
+
+        $entry = DB::connection($database)->select($query)[0]->Amount;
 
         return $entry;
     }
@@ -361,9 +635,10 @@ class StatementController extends BaseController {
 
     public function getOrderEntryDescriptions($database, $transactionNumber)
     {
-        $query = "SELECT * FROM OrderHistory, OrderEntry
+        $query = "SELECT OrderEntry.Description, REPLACE(OrderEntry.Comment, 'CREP', '') AS Comment FROM OrderHistory, OrderEntry
                   WHERE OrderHistory.TransactionNumber = $transactionNumber
-                  AND OrderEntry.OrderID = OrderHistory.OrderID";
+                  AND OrderEntry.OrderID = OrderHistory.OrderID
+                  ORDER BY OrderEntry.ID ASC";
 
         $descriptions = DB::connection($database)->select($query);
 
@@ -380,4 +655,24 @@ class StatementController extends BaseController {
         return $transaction;
     }
 
+    public function getOverdueCreditCustomers($database)
+    {
+        $query = "SELECT ID, Company, AccountNumber, FirstName, LastName, PhoneNumber, AccountBalance, CreditLimit, LastVisit, EmailAddress, CustomText1, CustomText2, CustomText3
+                  FROM Customer
+                  WHERE CreditLimit > 0
+                  AND AccountBalance > 0
+                  ORDER BY AccountBalance DESC";
+
+        return DB::connection($database)->select($query);
+    }
+
+    public function getCreditCustomers($database)
+    {
+        $query = "SELECT ID, AccountNumber, Company, FirstName, LastName, PhoneNumber, AccountBalance, CreditLimit, LastVisit, EmailAddress, CustomText1, CustomText2, CustomText3, TotalSales
+                  FROM Customer
+                  WHERE CreditLimit > 0
+                  ORDER BY AccountBalance DESC";
+
+        return DB::connection($database)->select($query);
+    }
 }

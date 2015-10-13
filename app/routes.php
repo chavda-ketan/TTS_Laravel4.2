@@ -71,7 +71,6 @@ Route::get('inventory/details/{id}/cancel', 'InventoryController@inventoryTransf
 Route::get('inventory/details/{id}/reopen', 'InventoryController@inventoryTransferReopen');
 Route::post('inventory/details/{id}/complete', 'InventoryController@inventoryTransferComplete');
 
-
 Route::get('inventory/department', 'InventoryController@inventoryTransferCategories');
 Route::get('inventory/search', 'InventoryController@inventoryTransferSearch');
 Route::post('inventory/save', 'InventoryController@inventoryTransferSave');
@@ -86,20 +85,24 @@ Route::get('inventory/test/{id}', 'InventoryController@inventoryTransferTest');
 Route::get('statement/test', 'StatementController@generateStatement');
 Route::get('statement/invoice', 'StatementController@invoice');
 Route::get('statement/overdue', 'StatementController@overdue');
+Route::get('statement/overdue/admin', 'StatementController@overdueAdmin');
 Route::get('statement/blob', 'StatementController@blobTest');
-// Route::get('statement/receipt/{customer}/{transaction}','StatementController@generateReceipt');
 Route::get('statement/receipt','StatementController@accountReceiptTest');
-
 
 Route::get('statement/cron','StatementController@accountStatementCron');
 Route::get('statement/receipt/cron','StatementController@accountReceiptCron');
 
+Route::get('statement/nb','StatementController@testNorthbridge');
+
+Route::get('statement/balances', 'StatementController@outstandingBalances');
+Route::get('statement/credit', 'StatementController@creditCustomers');
 
 /* Model breakdown */
 Route::get('records/breakdown/dump', 'RecordsController@testBreakdown');
 Route::get('records/breakdown', 'RecordsController@iPhoneBreakdown');
 
 
+Route::get('formlog','MailController@websiteFormLog');
 
 
 /* inline simple shit and shit */
@@ -129,3 +132,7 @@ Route::get('toners', 'ShitController@tonerCartridges');
 
 Route::get('laptopbattery', 'ShitController@batterySeries');
 Route::get('laptopbattery2', 'ShitController@batteryModels');
+
+
+/* Customer Kiosk helpers */
+Route::post('customer/add', 'RecordsController@addCustomer');

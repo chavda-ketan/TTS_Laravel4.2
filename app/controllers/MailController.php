@@ -51,6 +51,17 @@ class MailController extends BaseController
         $customer->emailAddress = $name->emailAddress;
     }
 
+    public function websiteFormLog()
+    {
+        $log = DB::connection('mysql-cac')->select("SELECT date, content FROM web_inquiry ORDER BY id DESC LIMIT 100");
+
+        foreach ($log as $formEntry) {
+            echo $formEntry->date;
+            echo $formEntry->content;
+            echo '<hr>';
+        }
+    }
+
     /* test the email template */
     public function testEmail()
     {

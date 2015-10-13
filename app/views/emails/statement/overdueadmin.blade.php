@@ -198,9 +198,8 @@ ul li, ol li {
             <table>
                 <tr>
                     <td>
-                        <h1>REMINDER</h1>
-                        <p>Your Account (Number: {{ $accountNumber }}) has an overdue balance of ${{ number_format((float) $accountBalance, 2, '.', '') }} that was due on {{ date('F') }} 15th.</p>
-                        <p>Kindly remit your payment - Thank you.</p>
+                        <h1>ADMIN NOTICE</h1>
+                        <p>Account (Number: {{ $accountNumber }}) has an overdue balance of ${{ number_format((float) $accountBalance, 2, '.', '') }} that was due on {{ date('F') }} 15th.</p>
                     </td>
                 </tr>
             </table>

@@ -1029,6 +1029,53 @@ Model breakdown
             $data["_$year"]['total'] = $this->iPhoneBreakdownQuery($year, "ItemID = 3033");
         }
 
+        $data['currentYear'] = array();
+
+        $curMonth = date('n') - 1;
+
+        foreach ($data["_2015"] as $model => $months) {
+            $colored = array();
+            $lastValue = NULL;
+
+            $i = 0;
+            // start the loop
+            foreach ($months as $value) {
+                $color = 'white';
+
+                // check if value exists
+                if ($value > 0) {
+
+                    // if the previous month was higher than this month...
+                    if ($value < $lastValue) {
+
+                        // ...check if the array key exists
+                        if (isset($colored[$i])) {
+                            $colored[$i][1] = 'red';
+                            $color = 'white';
+                        } else {
+                            $color = 'red';
+                        }
+
+                    }
+
+                }
+
+                if ($curMonth == $i) {
+                    $color = 'white';
+                }
+
+                if ($i != $curMonth - 1) {
+                    $color = 'white';
+                }
+
+                $colored[] = array($value, $color);
+                $lastValue = $value;
+                $i++;
+            }
+
+            $data['currentYear'][$model] = $colored;
+        }
+
         return View::make('reports.iphonebreakdown', $data);
     }
 
@@ -1133,4 +1180,47 @@ Leaderboard
         $salesReturnFromDB['3168'].=$result[0][0];
         return $salesReturnFromDB;
     }
+
+
+/**
+ Customer Kiosk Helpers
+ */
+
+    function addCustomer()
+    {
+        $customerData = Input::get();
+
+        $mobile = $customerData['mobile'];
+        $formattedMobile = substr($mobile,0,3)." ".substr($mobile,3,3)." ".substr($mobile,6);
+        $phone = isset($customerData['phone']) ? $customerData['phone'] : '';
+        $formattedPhone = substr($phone,0,3)." ".substr($phone,3,3)." ".substr($phone,6);
+
+        $company = isset($customerData['company']) ? $customerData['company'] : '';
+
+        $phoneString = "$formattedMobile $formattedPhone";
+
+        DB::connection('mssql-squareone')->table('Customer')->insert(
+            array(
+                'AccountNumber' => $formattedMobile,
+                'PhoneNumber' => $phoneString,
+                'EmailAddress' => $customerData['email'],
+                'Address2' => $customerData['email'],
+
+                'FirstName' => $customerData['first'],
+                'LastName' => $customerData['last'],
+                'Company' => $company,
+                // 'Address' => $customerData['address'],
+                // 'City' => $customerData['city'],
+                // 'State' => $customerData['province'],
+                'Zip' => $customerData['postal'],
+                // 'Country' => $customerData['country'],
+
+                'AccountTypeID' => 0,
+                'AssessFinanceCharges' => 1
+            )
+        );
+
+        return $formattedPhone;
+    }
+
 }

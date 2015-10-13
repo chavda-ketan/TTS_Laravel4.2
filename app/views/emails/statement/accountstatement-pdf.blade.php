@@ -16,13 +16,6 @@
                                 905-897-9860<br/>
                                 <br/>
                             </p>
-
-{{--                             <p>
-                                {{ $account->Company }}<br/>
-                                {{ $account->Address }}<br/>
-                                {{ $account->City }}, {{ $account->State }}<br/>
-                                {{ $account->Zip }}
-                            </p> --}}
                         </td>
 
                         <td class="headright">
@@ -42,7 +35,7 @@
                     <tbody>
                         <tr>
                             <td>
-                                <h2 style="font-size: 160%;">Account Summary - {{ $location }}</h2>
+                                <h2 style="font-size: 160%;">Account Summary - {{ date('F j Y') }} - {{ $location }}</h2>
                                 <p>
                                 </p>
                             </td>
@@ -50,7 +43,7 @@
                     </tbody>
                 </table>
 
-                <table class="realtable">
+                <table class="realtable" cellpadding="5">
                     <tr><th>Summary Information</th></tr>
                     <tr>
                         <td>
@@ -77,7 +70,7 @@
                                     </td>
 
                                     <td class="headright" style="width: 25%">
-                                        ${{ number_format((float) $account->AccountBalance - $newCharges, 2, '.', '') }}<br/>
+                                        ${{ number_format((float) $account->AccountBalance - $newCharges + $newPayments, 2, '.', '') }}<br/>
                                         ${{ $newCharges }}<br/>
                                         ${{ $newPayments }}<br/>
                                         =======================<br/>
@@ -103,7 +96,7 @@
                     </tbody>
                 </table>
 
-                <table class="realtable">
+                <table class="realtable" cellpadding="5" style="border-collapse: collapse">
                     <thead>
                         <tr>
                             <th>Transaction</th>
@@ -116,12 +109,24 @@
                     </thead>
 
                     <tbody>
+                    @if($account->AccountBalance - $newCharges + $newPayments != 0)
+                        <tr>
+                            <td style="border-bottom: 1px solid #ccc"></td>
+                            <td style="border-bottom: 1px solid #ccc"></td>
+                            <td style="border-bottom: 1px solid #ccc"><b>Previous Balance</b></td>
+                            <td style="border-bottom: 1px solid #ccc"></td>
+                            <td style="border-bottom: 1px solid #ccc"></td>
+                            <td style="border-bottom: 1px solid #ccc"><b>${{ number_format((float) $account->AccountBalance - $newCharges + $newPayments, 2, '.', '') }}</b></td>
+                        </tr>
+                    @endif
+
                     @foreach($transactions as $transactionId => $transaction)
                         <tr>
                             <td>TR-{{ $transactionId }}<br/>
                                 &nbsp;&nbsp;&nbsp;{{ $transaction['entry']->FormattedDate }}</td>
                             <td>15/{{ date("m/Y", strtotime("+1 month", strtotime($transaction['entry']->Date))) }}</td>
                             <td>
+                                Invoice Total<br/>
                                 @foreach($transaction['orderentry'] as $lineItem)
                                     {{ $lineItem->Description }}<br/>
                                     @if($lineItem->Comment)
@@ -141,15 +146,32 @@
                             <td>${{ number_format((float) $transaction['newBalance'], 2, '.', '') }}</td>
                         </tr>
                     @endforeach
+
+                    @foreach($payments as $date => $payment)
+                        <tr style="padding-top:100px">
+                            <td>Payment<br/>
+                                &nbsp;&nbsp;&nbsp;{{ $date }}</td>
+                            <td></td>
+                            <td>Payment received -- Thank You</td>
+                            <td></td>
+                            <td>${{ $payment['amount'] }}</td>
+                            <td>$-{{ $payment['amount'] }}</td>
+                            {{-- <td>${{ number_format((float) $account->AccountBalance, 2, '.', '') }}</td> --}}
+                            {{-- <td>${{ $totalCharges - $payment['amount'] }}</td> --}}
+                        </tr>
+                    @endforeach
+
                     </tbody>
 
                     <tfoot>
                         <tr>
                             <td style="border-left: none; border-right: none;"></td>
                             <td style="border-left: none; border-right: none;"></td>
+                            <td style="border-left: none; border-right: none;"></td>
+                            <td style="border-left: none; border-right: none;"></td>
                             <td style="border-left: none; text-align: right; padding-right: 5px;">Total</td>
-                            <td>${{ number_format((float) $account->AccountBalance, 2, '.', '') }}</td>
-                            <td>$0.00</td>
+                            {{-- <td>${{ number_format((float) $totalCharges, 2, '.', '') }}</td> --}}
+                            {{-- <td>${{ number_format((float) $newPayments, 2, '.', '') }}</td> --}}
                             <td>${{ number_format((float) $account->AccountBalance, 2, '.', '') }}</td>
                         </tr>
                     </tfoot>

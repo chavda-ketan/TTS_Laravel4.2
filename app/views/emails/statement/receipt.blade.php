@@ -1,21 +1,24 @@
 <pre>
-The TechKnow Space Inc.
-Accounts Receivable
-33 City Centre Dr Unit #142
-Mississauga, ON L5B 2N5
-905 897 9860
+			The TechKnow Space Inc.
+			  Accounts Receivable
+		  33 City Centre Dr Unit #142
+			Mississauga, ON L5B 2N5
+				 905 897 9860
 
-INVOICE #:		{{ $transactionNumber }}
+
+<b>ACCOUNT #:</b>		{{ $account->AccountNumber }}
+<b>INVOICE #:</b>		{{ $transactionNumber }}
 @if(isset($orderEntry))
-WORK ORDER #:		{{ $orderEntry[0]->OrderID }}
+<b>WORK ORDER #:</b>		{{ $orderEntry[0]->OrderID }}
 @endif
-ACCOUNT #:		{{ $account->AccountNumber }}
 
-Date:			{{ $transaction->Time }}
-Bill To:		{{ $account->FirstName }} {{ $account->LastName }} - {{ $account->Company }}
-			{{ $account->PhoneNumber }} - {{ $account->EmailAddress }}
+<b>Bill To:</b>		{{ $account->FirstName }} {{ $account->LastName }} - {{ $account->Company }}
+@if(isset($account->CustomField1))
+		ATT: {{ $account->CustomField1 }}
+@endif
+<b>Date:</b>			{{ $transaction->Time }}
 
-DESCRIPTION &amp; COMMENTS						AMOUNT
+<b>DESCRIPTION &amp; COMMENTS</b>						<b>AMOUNT</b>
 
 @if(isset($orderEntry))
 @foreach($orderEntry as $lineItem)
@@ -37,9 +40,9 @@ DESCRIPTION &amp; COMMENTS						AMOUNT
 @endforeach
 @endif
 ======================================================================
-						Subtotal      ${{ $transaction->Total - $transaction->SalesTax }}
-						 HST 13%      ${{ $transaction->SalesTax - 0 }}
-						   Total      ${{ $transaction->Total - 0 }}
+						<b>Subtotal</b>      ${{ $transaction->Total - $transaction->SalesTax }}
+						 <b>HST 13%</b>      ${{ $transaction->SalesTax - 0 }}
+						   <b>Total</b>      ${{ $transaction->Total - 0 }}
 
 
 			Thank you for choosing
