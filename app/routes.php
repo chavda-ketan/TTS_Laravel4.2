@@ -82,7 +82,7 @@ Route::get('inventory/test/{id}', 'InventoryController@inventoryTransferTest');
 
 
 /* Account statements */
-Route::get('statement/test', 'StatementController@generateStatement');
+Route::get('statement/test', 'StatementController@jasonTest');
 Route::get('statement/invoice', 'StatementController@invoice');
 Route::get('statement/overdue', 'StatementController@overdue');
 Route::get('statement/overdue/admin', 'StatementController@overdueAdmin');
@@ -91,11 +91,17 @@ Route::get('statement/receipt','StatementController@accountReceiptTest');
 
 Route::get('statement/cron','StatementController@accountStatementCron');
 Route::get('statement/receipt/cron','StatementController@accountReceiptCron');
+Route::get('statement/receipt/batch','StatementController@batchSendInvoices');
 
 Route::get('statement/nb','StatementController@testNorthbridge');
 
 Route::get('statement/balances', 'StatementController@outstandingBalances');
 Route::get('statement/credit', 'StatementController@creditCustomers');
+
+/* temporary junk */
+Route::get('statement/edit', 'StatementController@creditCustomerEditList');
+Route::get('statement/edit/{location}/{id}', 'StatementController@editCreditCustomer');
+Route::post('statement/edit/{location}/{id}/save', 'StatementController@saveCreditCustomer');
 
 /* Model breakdown */
 Route::get('records/breakdown/dump', 'RecordsController@testBreakdown');

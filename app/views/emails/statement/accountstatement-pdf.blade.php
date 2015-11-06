@@ -51,7 +51,7 @@
                                 <tr>
                                     <td style="width: 25%">
                                         Account Number: <br/>
-                                        Name:
+                                        Company:
                                     </td>
                                     <td style="width: 25%">
                                         {{ $account->AccountNumber }}<br/>
@@ -76,6 +76,11 @@
                                         =======================<br/>
                                         ${{ number_format((float) $account->AccountBalance, 2, '.', '') }}
                                     </td>
+                                </tr>
+                                <tr>
+                                    <td style="border-top: 1px solid #ccc; border-right: 1px solid #ccc;width: 25%"><br/><b>Accounts Payable</b></td>
+                                    <td style="border-top: 1px solid #ccc; border-right: 1px solid #ccc;width: 25%"><br/>Name: {{ $account->CustomText1 }}</td>
+                                    <td style="border-top: 1px solid #ccc; border-right: 1px solid #ccc;width: 25%"><br/>Phone: {{ $account->CustomText2 }}</td>
                                 </tr>
                             </table>
                         </td>

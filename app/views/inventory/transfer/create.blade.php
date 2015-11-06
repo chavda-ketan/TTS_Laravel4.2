@@ -6,7 +6,7 @@
     <hr>
 </div>
 
-<form id="search" class="" role="form">
+<form id="search" role="form">
     <div class="row form-inline margin">
         <div class="form-group">
             <label for="transfername" class="">Transfer Name</label>
@@ -43,6 +43,8 @@
                     <button type="button" id="laptop" style="" class="btn btn-default btn-sm ">Laptop Batteries</button>
                     <button type="button" id="adapters" style="" class="btn btn-default btn-sm ">Laptop Adapters</button>
                     <button type="button" id="phone" style="" class="btn btn-default btn-sm ">Phone Batteries</button>
+
+                    <input type="checkbox" id="sp" name="sp" value="1" checked="checked">Hide SP
                 </div>
 
                 <hr>
@@ -153,11 +155,15 @@ $(function(){
     });
 
     $("#search").submit(function(event){
+        if ($("input#sp").is(':checked')) {
+            var sp = 'true';
+        };
         $.getJSON("/inventory/search", {
             sku: $("input#sku").val(),
             department: $("select#department").find(':selected').data('id'),
             category: $("select#category").find(':selected').data('id'),
-            from: $("select#from").find(':selected').attr('value')
+            from: $("select#from").find(':selected').attr('value'),
+            sp: sp
         }, function(j){
             var results = '';
             num = 0;

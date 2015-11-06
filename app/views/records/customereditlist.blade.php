@@ -12,9 +12,6 @@
                 <th>AP Name</th>
                 <th>AP Phone #</th>
                 <th>AP Email</th>
-                <th>Balance</th>
-                <th>Credit Limit</th>
-                <th>Last Visit</th>
                 <th>Edit</th>
             </tr>
         </thead>
@@ -24,10 +21,7 @@
                 <td>{{ $customer->Company }} <br> {{ $customer->AccountNumber }}</td>
                 <td>{{ $customer->CustomText1 }}</td>
                 <td>{{ $customer->CustomText2 }}</td>
-                <td>{{ $customer->EmailAddress }}<br>{{ $customer->Email2 }}</td>
-                <td>${{ number_format((float) $customer->AccountBalance, 2, '.', '') }}</td>
-                <td>${{ number_format((float) $customer->CreditLimit, 2, '.', '') }}</td>
-                <td>{{ $customer->LastVisit }}</td>
+                <td>{{ $customer->CustomText3 }}</td>
                 <td><a href="edit/mssql-squareone/{{ $customer->ID }}">Edit</a></td>
             </tr>
             @endforeach
@@ -45,22 +39,16 @@
                 <th>AP Name</th>
                 <th>AP Phone #</th>
                 <th>AP Email</th>
-                <th>Balance</th>
-                <th>Credit Limit</th>
-                <th>Last Visit</th>
                 <th>Edit</th>
             </tr>
         </thead>
         <tbody>
             @foreach($toronto as $customer)
             <tr>
-                <td>{{ $customer->Company }}<br>{{ $customer->AccountNumber }}</td>
+                <td>{{ $customer->Company }} <br> {{ $customer->AccountNumber }}</td>
                 <td>{{ $customer->CustomText1 }}</td>
                 <td>{{ $customer->CustomText2 }}</td>
-                <td>{{ $customer->EmailAddress }}<br>{{ $customer->Email2 }}</td>
-                <td>${{ number_format((float) $customer->AccountBalance, 2, '.', '') }}</td>
-                <td>${{ number_format((float) $customer->CreditLimit, 2, '.', '') }}</td>
-                <td>{{ $customer->LastVisit }}</td>
+                <td>{{ $customer->CustomText3 }}</td>
                 <td><a href="edit/mssql-toronto/{{ $customer->ID }}">Edit</a></td>
             </tr>
             @endforeach
@@ -71,11 +59,5 @@
 @stop
 
 @section('scripts')
-
-<script type="text/javascript">
-    $(function(){
-        $('.table').tablesorter();
-    });
-</script>
 
 @stop

@@ -289,7 +289,7 @@ class MailController extends BaseController
         $item[3133] = "Blackberry";
         $item[3141] = "LG";
         $item[3173] = "Apple Computer";
-        $item[3201] = "PS3";
+        $item[3201] = "Playstation";
         $item[3136] = "Nokia";
         $item[7432] = "iPad Mini";
         $item[3134] = "HTC";

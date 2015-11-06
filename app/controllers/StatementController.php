@@ -2,6 +2,11 @@
 
 class StatementController extends BaseController {
 
+    public function jasonTest()
+    {
+        return $this->generateReceipt('mssql-squareone', 4, 31518);
+    }
+
     public function outstandingBalances()
     {
         $data['toronto'] = $this->getCreditCustomers('mssql-toronto');
@@ -48,6 +53,32 @@ class StatementController extends BaseController {
         return View::make('records.creditcustomers', $data);
     }
 
+    public function creditCustomerEditList()
+    {
+        $data['toronto'] = $this->getCreditCustomers('mssql-toronto');
+        $data['mississauga'] = $this->getCreditCustomers('mssql-squareone');
+
+        return View::make('records.customereditlist', $data);
+    }
+
+    public function editCreditCustomer($location, $id)
+    {
+        $data['customer'] = $this->getCustomer($location, $id);
+
+        return View::make('records.edit', $data);
+    }
+
+    public function saveCreditCustomer($location, $id)
+    {
+        $customText1 = Input::get('CustomText1');
+        $customText2 = Input::get('CustomText2');
+        $email2 = Input::get('Email2');
+
+        DB::connection($location)->update("UPDATE Customer SET CustomText1 = '$customText1', CustomText2 = '$customText2', Email2 = '$email2' WHERE ID = $id");
+
+        return Redirect::to('/statement/balances');
+    }
+
     public function accountReceiptCron()
     {
         $query = "SELECT * FROM Customer, [Transaction]
@@ -64,19 +95,21 @@ class StatementController extends BaseController {
 
         foreach ($customersS1 as $customer) {
             $rendered = $this->generateReceipt('mssql-squareone', $customer->ID, $customer->TransactionNumber);
+            $receipts[$customer->EmailAddress]['company'] = $customer->Company;
             $receipts[$customer->EmailAddress]['receipts'][] = $rendered;
 
-            if (isset($customer->CustomField3)) {
-                $receipts[$customer->EmailAddress]['cc'] = $customer->CustomField3;
+            if (isset($customer->Email2)) {
+                $receipts[$customer->EmailAddress]['cc'] = $customer->Email2;
             }
         }
 
         foreach ($customersTO as $customer) {
             $rendered = $this->generateReceipt('mssql-toronto', $customer->ID, $customer->TransactionNumber);
+            $receipts[$customer->EmailAddress]['company'] = $customer->Company;
             $receipts[$customer->EmailAddress]['receipts'][] = $rendered;
 
-            if (isset($customer->CustomField3)) {
-                $receipts[$customer->EmailAddress]['cc'] = $customer->CustomField3;
+            if (isset($customer->Email2)) {
+                $receipts[$customer->EmailAddress]['cc'] = $customer->Email2;
             }
         }
 
@@ -85,6 +118,70 @@ class StatementController extends BaseController {
         }
 
         return 'ok';
+    }
+
+    public function batchSendInvoices()
+    {
+        $begin = new DateTime('2015-10-01 00:00:00');
+        $end = new DateTime('2015-11-01 00:00:00');
+
+        $interval = DateInterval::createFromDateString('1 day');
+        $period = new DatePeriod($begin, $interval, $end);
+
+        foreach ($period as $day) {
+            $date = $day->format("Y-m-d 00:00:00:000");
+            $receipts = $this->getReceiptsForDay($date);
+
+            $this->processReceipts($receipts);
+        }
+
+        return 'ok';
+    }
+
+    public function getReceiptsForDay($day)
+    {
+        $query = "SELECT * FROM Customer, [Transaction]
+                  WHERE Customer.CreditLimit > 0
+                  AND [Transaction].CustomerID = Customer.ID
+                  AND [Transaction].Time >= dateadd(day,datediff(day,1,'$day'),0)
+                  AND [Transaction].Time < dateadd(day,datediff(day,0,'$day'),0)
+                  AND Company = 'Home Trust Company'";
+
+        $return['customersS1'] = DB::connection('mssql-squareone')->select($query);
+        $return['customersTO'] = DB::connection('mssql-toronto')->select($query);
+
+        return $return;
+    }
+
+    public function processReceipts($customers)
+    {
+        $receipts = [];
+
+        foreach ($customers['customersS1'] as $customer) {
+            $rendered = $this->generateReceipt('mssql-squareone', $customer->ID, $customer->TransactionNumber);
+            $receipts[$customer->EmailAddress]['company'] = $customer->Company;
+            $receipts[$customer->EmailAddress]['receipts'][] = $rendered;
+
+            if (isset($customer->Email2)) {
+                $receipts[$customer->EmailAddress]['cc'] = $customer->Email2;
+            }
+        }
+
+        foreach ($customers['customersTO'] as $customer) {
+            $rendered = $this->generateReceipt('mssql-toronto', $customer->ID, $customer->TransactionNumber);
+            $receipts[$customer->EmailAddress]['company'] = $customer->Company;
+            $receipts[$customer->EmailAddress]['receipts'][] = $rendered;
+
+            if (isset($customer->Email2)) {
+                $receipts[$customer->EmailAddress]['cc'] = $customer->Email2;
+            }
+        }
+
+        foreach ($receipts as $email => $receipt) {
+            $this->mailReceipts($receipt, $email);
+        }
+
+        return;
     }
 
     public function generateReceipt($database, $customerId, $transactionNumber)
@@ -109,12 +206,6 @@ class StatementController extends BaseController {
         $data['customerId'] = $customerId;
         $data['account'] = $customer;
 
-        $storagePath = storage_path().'/';
-        $fileName = $customer->EmailAddress.'-receipt.pdf';
-        $fullReceiptPath = $storagePath.$fileName;
-
-        PDF::loadView('emails.statement.receipt', $data)->save($fullReceiptPath);
-
         $view = View::make('emails.statement.receipt', $data);
         $receipt = (string) $view;
 
@@ -126,7 +217,8 @@ class StatementController extends BaseController {
         $data['receipts'] = $receipts['receipts'];
 
         $mailto = array(
-            'email' => $email
+            'email' => $email,
+            'company' => $receipts['company']
         );
 
         if (isset($receipts['cc'])) {
@@ -135,19 +227,22 @@ class StatementController extends BaseController {
 
         Mail::send('emails.statement.combinedreceipt', $data, function ($message) use ($mailto) {
             $message->from('service@techknowspace.com', 'Accounts Receivable - The TechKnow Space');
-            // $message->to('acottle@taimalabs.com')->subject('Your Receipt');
-            $message->to($mailto['email'])->subject('Your Receipt');
-            $message->cc('b2badmin@techknowspace.com');
-            if (isset($mailto['cc'])) {
-                $message->cc($mailto['cc']);
+            // $message->to($mailto['email'])->subject('Your Invoice - '.$mailto['company']);
+            $message->to('b2badmin@techknowspace.com')->subject('Your Invoice - '.$mailto['company']);
+
+            if (isset($mailto['cc']) && $mailto['cc'] != $mailto['email']) {
+                $message->cc(['b2badmin@techknowspace.com',$mailto['cc']]);
+            } else {
+                $message->cc('b2badmin@techknowspace.com');
             }
         });
     }
 
     public function accountStatementCron()
     {
-        $query = "SELECT * FROM Customer WHERE CreditLimit > 0 AND Company = 'StatPro Canada'";
+        //$query = "SELECT * FROM Customer WHERE CreditLimit > 0 AND Company != 'StatPro Canada'";
         // $query = "SELECT * FROM Customer WHERE AccountBalance > 0";
+        $query = "SELECT * FROM Customer WHERE AccountBalance > 0";
 
         $customersS1 = DB::connection('mssql-squareone')->select($query);
         $customersTO = DB::connection('mssql-toronto')->select($query);
@@ -161,8 +256,8 @@ class StatementController extends BaseController {
             $statements[$customer->EmailAddress]['name'] = $customer->Company;
 
             $statements[$customer->EmailAddress]['balance'] = $rendered[1];
-            if (isset($customer->CustomField3)) {
-                $statements[$customer->EmailAddress]['cc'] = $customer->CustomField3;
+            if (isset($customer->Email2)) {
+                $statements[$customer->EmailAddress]['cc'] = $customer->Email2;
             }
         }
 
@@ -178,8 +273,8 @@ class StatementController extends BaseController {
                 $statements[$customer->EmailAddress]['balance'] = $rendered[1];
             }
 
-            if (isset($customer->CustomField3)) {
-                $statements[$customer->EmailAddress]['cc'] = $customer->CustomField3;
+            if (isset($customer->Email2)) {
+                $statements[$customer->EmailAddress]['cc'] = $customer->Email2;
             }
         }
 
@@ -215,17 +310,18 @@ class StatementController extends BaseController {
 
         Mail::send('emails.statement.finalstatement', $data, function ($message) use ($mailto) {
             $message->from('service@mg.techknowspace.com', 'Accounts Receivable - The TechKnow Space');
-            // $message->to($mailto['email'])->subject('Account Statement - '.$mailto['name']);
-            // $message->cc('b2badmin@techknowspace.com');
+            $message->to($mailto['email'])->subject('Account Statement - '.$mailto['name']);
+            $message->cc('b2badmin@techknowspace.com');
 
-            // if (isset($mailto['cc'])) {
-            //     $message->cc($mailto['cc']);
-            // }
+            if (isset($mailto['cc']) && $mailto['cc'] != $mailto['email']) {
+                $message->cc(['b2badmin@techknowspace.com',$mailto['cc']]);
+            } else {
+                $message->cc('b2badmin@techknowspace.com');
+            }
 
             $message->attach($mailto['attachment']);
-            // $message->cc('b2badmin@techknowspace.com');
 
-            $message->to('b2badmin@techknowspace.com')->subject('Account Statement - '.$mailto['name']);
+            // $message->to('jason@techknowspace.com')->subject('Account Statement - '.$mailto['name']);
 
             // $size = sizeOf($mailto['path']);
             // for($i=0; $i < $size; $i++){
@@ -379,6 +475,11 @@ class StatementController extends BaseController {
             $realBalance = $customer->AccountBalance - $this->getAccountReceivableSumForCustomer('mssql-squareone', $customer->ID, $cutoffString);
             $combined[$customer->EmailAddress]['ID'] = $customer->ID;
             $combined[$customer->EmailAddress]['AccountNumber'] = $customer->AccountNumber;
+            $combined[$customer->EmailAddress]['Company'] = $customer->Company;
+            if(!$combined[$customer->EmailAddress]['Company']) {
+                $combined[$customer->EmailAddress]['Company'] = $customer->AccountNumber;
+            }
+
             $combined[$customer->EmailAddress]['balance'] = $realBalance;
         }
 
@@ -387,6 +488,10 @@ class StatementController extends BaseController {
 
             $combined[$customer->EmailAddress]['ID'] = $customer->ID;
             $combined[$customer->EmailAddress]['AccountNumber'] = $customer->AccountNumber;
+            $combined[$customer->EmailAddress]['Company'] = $customer->Company;
+            if(!$combined[$customer->EmailAddress]['Company']) {
+                $combined[$customer->EmailAddress]['Company'] = $customer->AccountNumber;
+            }
 
             if (isset($combined[$customer->EmailAddress]['balance'])) {
                 $combined[$customer->EmailAddress]['balance'] = $combined[$customer->EmailAddress]['balance'] + $realBalance;
@@ -397,7 +502,7 @@ class StatementController extends BaseController {
 
         foreach ($combined as $email => $customer) {
             if ($customer['balance'] > 0.01) {
-                $this->sendOverdueAdminNotification($email, $customer['AccountNumber'], $customer['balance']);
+                $this->sendOverdueAdminNotification($email, $customer['Company'], $customer['balance']);
                 // var_dump($customer);
             }
         }
@@ -406,38 +511,37 @@ class StatementController extends BaseController {
     }
 
 
-    public function sendOverdueNotification($email, $accountNumber, $accountBalance)
+    public function sendOverdueNotification($email, $company, $accountBalance)
     {
-        $data['accountNumber'] = $accountNumber;
+        $data['company'] = $company;
         $data['accountBalance'] = $accountBalance;
 
         $mailto = array(
-            'email' => $email
+            'email' => $email,
+            'company' => $company
         );
 
         Mail::send('emails.statement.overdue', $data, function ($message) use ($mailto) {
             $message->from('service@mg.techknowspace.com', 'Accounts Receivable - The TechKnow Space');
-            $message->to($mailto['email'])->subject('Outstanding Balance');
+            $message->to($mailto['email'])->subject('Outstanding Balance - '.$mailto['company']);
             $message->cc('b2badmin@techknowspace.com');
-
-            // $message->to('jason@techknowspace.com')->subject('Outstanding Balance');
         });
 
     }
 
-    public function sendOverdueAdminNotification($email, $accountNumber, $accountBalance)
+    public function sendOverdueAdminNotification($email, $company, $accountBalance)
     {
-        $data['accountNumber'] = $accountNumber;
+        $data['company'] = $company;
         $data['accountBalance'] = $accountBalance;
 
         $mailto = array(
-            'email' => $email
+            'email' => $email,
+            'company' => $company
         );
 
         Mail::send('emails.statement.overdueadmin', $data, function ($message) use ($mailto) {
             $message->from('service@mg.techknowspace.com', 'Accounts Receivable - The TechKnow Space');
-            $message->to('b2badmin@techknowspace.com')->subject('OVERDUE Balance');
-            // $message->to('jason@techknowspace.com')->subject('Outstanding Balance');
+            $message->to('b2badmin@techknowspace.com')->subject('OVERDUE Balance - '.$mailto['company']);
         });
 
     }
@@ -628,14 +732,18 @@ class StatementController extends BaseController {
     {
         $query = "SELECT * FROM [Order] WHERE ID = $orderId";
 
-        $order = DB::connection($database)->select($query)[0];
+        $result = DB::connection($database)->select($query);
 
-        return $order;
+        if(isset($result[0])) {
+            return $result[0];
+        } else {
+            return [];
+        }
     }
 
     public function getOrderEntryDescriptions($database, $transactionNumber)
     {
-        $query = "SELECT OrderEntry.Description, REPLACE(OrderEntry.Comment, 'CREP', '') AS Comment FROM OrderHistory, OrderEntry
+        $query = "SELECT OrderEntry.Description, REPLACE(OrderEntry.Comment, 'CREP', '') AS Comment, OrderEntry.OrderID, OrderEntry.Price FROM OrderHistory, OrderEntry
                   WHERE OrderHistory.TransactionNumber = $transactionNumber
                   AND OrderEntry.OrderID = OrderHistory.OrderID
                   ORDER BY OrderEntry.ID ASC";
@@ -657,7 +765,7 @@ class StatementController extends BaseController {
 
     public function getOverdueCreditCustomers($database)
     {
-        $query = "SELECT ID, Company, AccountNumber, FirstName, LastName, PhoneNumber, AccountBalance, CreditLimit, LastVisit, EmailAddress, CustomText1, CustomText2, CustomText3
+        $query = "SELECT ID, Company, AccountNumber, FirstName, LastName, PhoneNumber, AccountBalance, CreditLimit, LastVisit, EmailAddress, CustomText1, CustomText2, CustomText3, Email2
                   FROM Customer
                   WHERE CreditLimit > 0
                   AND AccountBalance > 0
@@ -668,7 +776,7 @@ class StatementController extends BaseController {
 
     public function getCreditCustomers($database)
     {
-        $query = "SELECT ID, AccountNumber, Company, FirstName, LastName, PhoneNumber, AccountBalance, CreditLimit, LastVisit, EmailAddress, CustomText1, CustomText2, CustomText3, TotalSales
+        $query = "SELECT ID, AccountNumber, Company, FirstName, LastName, PhoneNumber, AccountBalance, CreditLimit, LastVisit, EmailAddress, CustomText1, CustomText2, CustomText3, Email2, TotalSales
                   FROM Customer
                   WHERE CreditLimit > 0
                   ORDER BY AccountBalance DESC";

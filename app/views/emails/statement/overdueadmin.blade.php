@@ -199,7 +199,7 @@ ul li, ol li {
                 <tr>
                     <td>
                         <h1>ADMIN NOTICE</h1>
-                        <p>Account (Number: {{ $accountNumber }}) has an overdue balance of ${{ number_format((float) $accountBalance, 2, '.', '') }} that was due on {{ date('F') }} 15th.</p>
+                        <p>Account: {{ $company }} has an unpaid balance of ${{ number_format((float) $accountBalance, 2, '.', '') }} that was due on {{ date('F') }} 15th.</p>
                     </td>
                 </tr>
             </table>

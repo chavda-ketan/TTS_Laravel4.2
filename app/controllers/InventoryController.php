@@ -110,6 +110,7 @@ Inventory Transfers
         $department = Input::get('department');
         $category = Input::get('category');
         $from = Input::get('from');
+        $hideSP = Input::get('sp');
 
         $query = "SELECT ItemLookupCode, Description, Quantity FROM Item WHERE Inactive = 0 AND ";
 
@@ -141,6 +142,9 @@ Inventory Transfers
             $query .= "DepartmentID = $department AND CategoryID = $category";
         }
 
+        if ($hideSP) {
+            $query .= " AND Description NOT LIKE 'SP %'";
+        }
 
         $mississauga = DB::connection('mssql-squareone')->select($query);
         $toronto = DB::connection('mssql-toronto')->select($query);
