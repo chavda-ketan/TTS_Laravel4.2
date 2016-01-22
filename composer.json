@@ -7,11 +7,11 @@
 		"laravel/framework": "4.2.*",
 		"guzzlehttp/guzzle": "~4.0",
 		"indatus/dispatcher": "1.*",
-		"thujohn/twitter": "dev-master",
+		"thujohn/twitter": "~2.0",
 		"google/apiclient": "1.0.*@beta",
 		"eyecatchup/webmaster-tools-data": "dev-master",
 		"googleads/googleads-php-lib": "dev-master",
-		"phpseclib/phpseclib": "dev-master",
+		"phpseclib/phpseclib": "0.3.*",
 		"barryvdh/laravel-dompdf": "0.4.*"
 	},
 	"autoload": {

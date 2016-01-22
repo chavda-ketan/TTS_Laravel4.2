@@ -1,52 +1,82 @@
-<pre>
-The TechKnow Space Inc.
-Accounts Receivable
-33 City Centre Dr Unit #142
-Mississauga, ON L5B 2N5
-905 897 9860
+<div style="font-family: Helvetica, Arial, sans-serif">
+    <div style="text-align: center;">
+        The TechKnow Space Inc.<br>
+        Accounts Receivable<br>
+        33 City Centre Dr Unit #142<br>
+        Mississauga, ON L5B 2N5<br>
+        905 897 9860<br><br>
 
+        HST#: 81032-4079<br>
+    </div>
+    <br>
+    <br>
 
-<b>ACCOUNT #:</b>       {{ $account->AccountNumber }}
-<b>INVOICE #:</b>       {{ $transactionNumber }}
-@if(isset($orderEntry))
-<b>WORK ORDER #:</b>        {{ $orderEntry[0]->OrderID }}
-@endif
+    <b>ACCOUNT #:</b> {{ $account->AccountNumber }}<br>
+    <b>INVOICE #:</b> {{ $transactionNumber }}<br>
+    @if(isset($orderEntry))
+        <b>WORK ORDER #:</b> {{ $orderEntry[0]->OrderID }}<br>
+    @endif
+    <br>
 
-<b>Bill To:</b>     {{ $account->FirstName }} {{ $account->LastName }} - {{ $account->Company }}
-@if(isset($account->CustomField1))
-        ATT: {{ $account->CustomField1 }}
-@endif
-<b>Date:</b>            {{ $transaction->Time }}
+    <b>Bill To:</b> {{ $account->FirstName }} {{ $account->LastName }} - {{ $account->Company }}<br>
+    @if(isset($account->CustomField1))
+        ATT: {{ $account->CustomField1 }}<br>
+    @endif
+    <b>Date:</b> {{ $transaction->Time }}<br>
+    <br>
 
-<b>DESCRIPTION &amp; COMMENTS</b>                       <b>AMOUNT</b>
+    <b>DESCRIPTION &amp; COMMENTS</b><br>
+    <hr>
+    <br>
+    <table>
+        @if(isset($orderEntry))
+            @foreach($orderEntry as $lineItem)
+                <tr>
+                    <td style="width:70%;">
+                        <b>{{ $lineItem->Description }}</b><br>
+                        @if($lineItem->Comment)
+                            {{ $lineItem->Comment }}
+                        @endif
+                    </td>
+                    <td>
+                        <b>${{ number_format((float) $lineItem->Price, 2, '.', '') }}</b>
+                    </td>
+                </tr>
+                <br>
+            @endforeach
+        @endif
 
-@if(isset($orderEntry))
-@foreach($orderEntry as $lineItem)
-{{ $lineItem->Description }}                              ${{ $lineItem->Price - 0 }}
-@if($lineItem->Comment)
-   {{ $lineItem->Comment }}
-@endif
+        @if(isset($lineItems))
+            @foreach($lineItems as $lineItem)
+                <tr>
+                    <td style="width:70%;">
+                        <b>{{ $lineItem->Description }}</b><br>
+                        @if($lineItem->Comment)
+                            {{ $lineItem->Comment }}
+                        @endif
+                    </td>
+                    <td>
+                        <b>${{ number_format((float) $lineItem->Price, 2, '.', '') }}</b>
+                    </td>
+                </tr>
+                <br>
+            @endforeach
+        @endif
+    </table>
+    <hr>
+    <b>Subtotal:</b> ${{ number_format((float) $order->Total - $order->Tax, 2, '.', '') }}<br>
+    <b>HST 13%:</b> ${{ number_format((float) $order->Tax, 2, '.', '') }}<br>
+    <b>Total:</b> ${{ number_format((float) $order->Total, 2, '.', '') }}<br>
+    {{-- <b>Tendered:</b>      ${{ number_format((float) $tender[0]->Amount, 2, '.', '') }} - {{ $tender[0]->Description }}<br> --}}
+    {{-- <b>Pending Charges:</b>  $575.00<br> --}}
 
-@endforeach
-@endif
+    <br>
+    <br>
 
-@if(isset($lineItems))
-@foreach($lineItems as $lineItem)
-{{ $lineItem->Description }}                              ${{ $lineItem->Price - 0 }}
-@if($lineItem->Comment)
-   {{ $lineItem->Comment }}
-@endif
-
-@endforeach
-@endif
-======================================================================
-                        <b>Subtotal</b>      ${{ $transaction->Total - $transaction->SalesTax }}
-                         <b>HST 13%</b>      ${{ $transaction->SalesTax - 0 }}
-                           <b>Total</b>      ${{ $transaction->Total - 0 }}
-
-
-Thank you for choosing
-The TechKnow Space
-All Digital Repairs Under 1 Roof
-http://techknowspace.com
-</pre>
+    <div style="text-align: center;">
+        Thank you for choosing<br>
+        The TechKnow Space<br>
+        All Digital Repairs Under 1 Roof<br>
+        http://techknowspace.com<br>
+    </div>
+</div>

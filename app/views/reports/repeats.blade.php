@@ -24,6 +24,7 @@
                 <label class="radio-inline"><input type="radio" name="metrics" value="csrh" checked="checked"> CSRH</label>
                 <label class="radio-inline"><input type="radio" name="metrics" value="crep"> CREP</label>
                 <label class="radio-inline"><input type="radio" name="metrics" value="cref"> CREF</label>
+                <label class="radio-inline"><input type="radio" name="metrics" value="csam"> CSAM</label>
                 <label class="radio-inline"><input type="radio" name="metrics" value="all"> All</label>
 
             </div>
@@ -48,6 +49,7 @@
         var search = [ {{ $search }} ];
         var repeat = [ {{ $repeat }} ];
         var referral = [ {{ $referral }} ];
+        var samsung = [ {{ $samsung }} ];
         var error = [ {{ $error }} ];
         var revenue = [ {{ $revenue }} ];
         var spend = [ {{ $spend }} ];
@@ -55,6 +57,7 @@
         var searchtrend = [ {{ $trends['search'] }} ]
         var repeattrend = [ {{ $trends['repeat'] }} ]
         var referraltrend = [ {{ $trends['referral'] }} ]
+        var samsungtrend = [ {{ $trends['samsung'] }} ]
 
         var datalabel = {
                 enabled: true,
@@ -244,6 +247,16 @@
                 type: 'column'
             },
             @endif
+            @if($mode === 'csam' || $mode === 'all')
+             {
+                name: 'Samsung',
+                data: samsung,
+                dataLabels: datalabel,
+                color: '#992244',
+                yAxis: 0,
+                type: 'column'
+            },
+            @endif
             // {
             //     name: 'Error',
             //     data: error,
@@ -281,8 +294,14 @@
                 // color: 'red',
                 yAxis: 0,
                 type: 'line',
-            },
-
+            }, {
+                name: 'Samsung Avg',
+                data: samsungtrend,
+                dataLabels: datalabelTrends,
+                // color: 'red',
+                yAxis: 0,
+                type: 'line',
+            }
             ]
         });
 

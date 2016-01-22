@@ -53,10 +53,12 @@ class MailController extends BaseController
 
     public function websiteFormLog()
     {
-        $log = DB::connection('mysql-cac')->select("SELECT date, content FROM web_inquiry ORDER BY id DESC LIMIT 100");
+        $log = DB::connection('mysql-cac')->select("SELECT date, time, content FROM web_inquiry ORDER BY id DESC LIMIT 300");
 
         foreach ($log as $formEntry) {
             echo $formEntry->date;
+            echo ' ';
+            echo date('h:mA',$formEntry->time);
             echo $formEntry->content;
             echo '<hr>';
         }

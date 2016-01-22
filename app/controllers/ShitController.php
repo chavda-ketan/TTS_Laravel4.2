@@ -2,7 +2,76 @@
 
 class ShitController extends BaseController
 {
+    public function batchCloseWorkOrders()
+    {
+        $query = "SELECT * FROM [OrderManagement] WHERE Staticupdate < '2015-10-01 12:00:00:000' AND (StatusID = 14 OR StatusID = 24)";
+        //$query = "SELECT * FROM [Order] WHERE Closed = 0 AND LastUpdated < '2015-01-01 12:00:00:000'";
+        $orders = DB::connection('mssql-squareone')->select($query);
 
+        foreach ($orders as $order){
+            $query = "SELECT * FROM [OrderEntry] WHERE ID = $order->OrderEntryID";
+
+            if(isset(DB::connection('mssql-squareone')->select($query)[0]->OrderID)){
+                $order->ID = DB::connection('mssql-squareone')->select($query)[0]->OrderID;
+            }
+
+            echo "$order->ID <br>";
+            $this->closeWorkOrder($order->ID);
+        }
+
+        return 'ok';
+    }
+
+    public function closeWorkOrder($id)
+    {
+        /* SELECTS */
+        $query = "SELECT * FROM [Order] WHERE ID = $id";
+        $order = DB::connection('mssql-squareone')->select($query)[0];
+
+        $query = "SELECT * FROM [OrderEntry] WHERE OrderID = $id";
+        $orderEntry = DB::connection('mssql-squareone')->select($query)[0];
+
+        $itemID = $orderEntry->ItemID;
+
+        /* UPDATES */
+        $query = "UPDATE [Order] SET Closed = 1 WHERE ID = $id";
+        DB::connection('mssql-squareone')->select($query);
+
+        $query = "UPDATE [OrderEntry] SET QuantityOnOrder = 0, QuantityRTD = 1 WHERE OrderID = $id";
+        DB::connection('mssql-squareone')->select($query);
+
+        $customer = $order->CustomerID;
+
+        /* INSERTS */
+
+        // ShipToID,StoreID,TransactionNumber,BatchNumber,Time,                    CustomerID,CashierID,Total,SalesTax,Comment,ReferenceNumber,DBTimeStamp,        Status,ExchangeID,ChannelType,RecallID,RecallType
+        // 0,       0,      33146,            17,         2016-01-19 15:18:58:000, 4,         1,        0,    0,       ,       ,               0x0000000000964B41, 0,     0,         0,          22949,   4
+
+        $query = "INSERT INTO [Transaction]
+                  (ShipToID,StoreID,BatchNumber,Time,CustomerID,CashierID,Total,SalesTax,Comment,ReferenceNumber,Status,ExchangeID,ChannelType,RecallID,RecallType)
+                  VALUES (0, 0, 17, '2016-01-19 15:18:58:000', $customer, 1, 0, 0, '', '', 0, 0, 0, $id, 4)";
+        DB::connection('mssql-squareone')->select($query);
+
+        $query = "SELECT TransactionNumber FROM [dbo].[Transaction] WHERE RecallID = $id";
+        $transactionID = DB::connection('mssql-squareone')->select($query)[0]->TransactionNumber;
+
+        // ID,     StoreID,BatchNumber,Date,                   OrderID,CashierID,DeltaDeposit,TransactionNumber,Comment,DBTimeStamp
+        // 45683,  0,      17,         2016-01-19 15:18:58:000,22949,  1,        0,           33146,            ,       0x0000000000964B47
+
+        $query = "INSERT INTO [OrderHistory]
+                  (StoreID,BatchNumber,Date,OrderID,CashierID,DeltaDeposit,TransactionNumber,Comment)
+                  VALUES (0, 17, '2016-01-19 15:18:58:000', $id, 1, 0, $transactionID, '')";
+        DB::connection('mssql-squareone')->select($query);
+
+        // Commission,Cost,FullPrice,StoreID,ID,   TransactionNumber,ItemID,Price,PriceSource,Quantity,SalesRepID,Taxable,DetailID,Comment,DBTimeStamp,        DiscountReasonCodeID,ReturnReasonCodeID,TaxChangeReasonCodeID,SalesTax,QuantityDiscountID
+        // 0,         0,   0,        0,      39652,33146,            3033,  0,    1,          1,       0,         1,      0,       ,       0x0000000000964B42, 0,                   0,                 0,                    0,       0
+
+        $query = "INSERT INTO [TransactionEntry]
+                  (Commission,Cost,FullPrice,StoreID,TransactionNumber,ItemID,Price,PriceSource,Quantity,SalesRepID,Taxable,DetailID,Comment,DiscountReasonCodeID,ReturnReasonCodeID,TaxChangeReasonCodeID,SalesTax,QuantityDiscountID)
+                  VALUES (0, 0, 0, 0, $transactionID, $itemID, 0, 1, 1, 0, 1, 0, '', 0, 0, 0, 0, 0)";
+        DB::connection('mssql-squareone')->select($query);
+
+    }
 
     public function tonerCartridges()
     {
@@ -604,6 +673,229 @@ class ShitController extends BaseController
 
         $ret = $items;
         return var_dump($ret);
+    }
+
+    /* LAPTOP CHARGERS */
+
+    public function laptopChargerSeries()
+    {
+
+        $itemQuery = 'SELECT DISTINCT brand, series FROM laptop_chargers_by_laptop_model';
+
+        $items = DB::connection('mysql-cac')->select($itemQuery);
+
+        foreach ($items as $item) {
+            if($item->series == 'none')
+            {
+                $titleString = $item->brand;
+            } else {
+                $titleString = $item->brand.' '.$item->series;
+            }
+
+            $name = $titleString.' Chargers Laptop AC Adapter Toronto & Mississauga Store Pick Up';
+            $menu_name = strtoupper($titleString.' series chargers');
+            $page_name = $titleString.' Chargers Laptop AC Adapter Toronto & Mississauga Store Pick Up';
+            $service = 'Laptop Chargers For';
+            $model = $titleString;
+            $url = str_replace(' ', '-', trim(strtolower($titleString)));
+            $url = urlencode($url).'-series-chargers-laptop-ac-adapters';
+            $menu = 1;
+            $description = "Chargers for $titleString Series laptops. Toronto: nr Rogers Centre & Mississauga: opposite Square One. $item->brand Laptop AC Adapters / Chargers in stock.";
+            $keywords = ucfirst("$titleString series laptop chargers");
+
+            if ($item->brand == 'Fujitsu') {
+                $parent = 376;
+            }
+            elseif ($item->brand == 'Lenovo') {
+                $parent = 379;
+            }
+            elseif ($item->brand == 'Toshiba') {
+                $parent = 384;
+            }
+            elseif ($item->brand == 'Sony') {
+                $parent = 383;
+            }
+            elseif ($item->brand == 'Compaq') {
+                $parent = 374;
+            }
+            elseif ($item->brand == 'Samsung') {
+                $parent = 382;
+            }
+            elseif ($item->brand == 'Gateway') {
+                $parent = 377;
+            }
+            elseif ($item->brand == 'HP') {
+                $parent = 374;
+            }
+            elseif ($item->brand == 'Dell') {
+                $parent = 375;
+            }
+            elseif ($item->brand == 'Asus') {
+                $parent = 373;
+            }
+            elseif ($item->brand == 'Acer') {
+                $parent = 371;
+            }
+
+            DB::connection('mysql-cac')->insert('REPLACE INTO web_category_page (name, menu_name, page_name, service, model, url, parent, menu, description, keywords)
+                                             VALUES (?,?,?,?,?,?,?,?,?,?)', array($name, $menu_name, $page_name, $service, $model, $url, $parent, $menu, $description, $keywords));
+        }
+
+        $ret = $items;
+        return var_dump($ret);
+    }
+
+    public function laptopChargerModels()
+    {
+        $itemQuery = 'SELECT DISTINCT id, brand, series, model FROM laptop_chargers_by_laptop_model';
+
+        $items = DB::connection('mysql-cac')->select($itemQuery);
+
+        $i = 0;
+
+        foreach ($items as $item) {
+            $i++;
+
+            if($item->series == 'none')
+            {
+                $titleString = "$item->brand $item->model";
+                $parentName = $item->brand;
+            } else {
+                $titleString = "$item->brand $item->series $item->model";
+                $parentName = $item->brand.' '.$item->series;
+            }
+
+            $name = "$titleString Charger Laptop AC Adapter Toronto & Mississauga Store Pick Up";
+            $menu_name = strtoupper($item->model);
+            $service = "Laptop Charger for";
+            $model = $titleString;
+            $url = str_replace(' ', '-', trim(strtolower($titleString)));
+            $url = urlencode($url).'-charger-laptop-ac-adapter';
+            $menu = 1;
+            $description = "Charger for $titleString. Toronto: nr Rogers Centre & Mississauga: opposite Square One. $item->brand Laptop AC Adapters / Chargers in stock.";
+            $keywords = $name;
+            $refid = $item->id;
+
+            $subquery = "SELECT id FROM web_category_page WHERE model = '$parentName' AND service = 'Laptop Chargers For'";
+            $parent = DB::connection('mysql-cac')->select($subquery)[0]->id;
+
+            DB::connection('mysql-cac')->insert('REPLACE INTO web_category_page (name, menu_name, service, url, parent, refid, menu, description, keywords, model)
+                                             VALUES (?,?,?,?,?,?,?,?,?,?)', array($name, $menu_name, $service, $url, $parent, $refid, $menu, $description, $keywords, $model));
+
+            print("$i - $titleString\n");
+
+            ob_flush();
+            flush();
+        }
+
+        $ret = $items;
+        return var_dump($ret);
+    }
+
+
+    public function laptopChargerSubpage()
+    {
+        $itemQuery = 'SELECT DISTINCT id, brand, series, model, volts, amps, watts FROM laptop_chargers_by_laptop_model';
+
+        $items = DB::connection('mysql-cac')->select($itemQuery);
+
+        $i = 0;
+
+        foreach ($items as $item) {
+            $i++;
+
+            if($item->series == 'none')
+            {
+                $titleString = "$item->brand $item->model";
+                $parentName = $item->brand;
+            } else {
+                $titleString = "$item->brand $item->series $item->model";
+                $parentName = $item->brand.' '.$item->series;
+            }
+
+            // $name = "Laptop Models Compatible with $item->volts $item->amps $item->watts for $titleString";
+            $name = "Laptop Models Compatible with $item->volts $item->amps for $titleString";
+            $name = str_replace('  ', ' ', $name);
+            $menu_name = 'Compatible Laptop Models';
+            $service = "Laptop Model Compatibility";
+            $model = "charger for $titleString";
+            $url = strtolower($name);
+            $url = preg_replace('/\s+/', '-', $url);
+            $url = str_replace('.', '-', $url);
+            $url = urlencode($url);
+            $menu = 1;
+            $description = "$titleString $item->volts $item->amps Charger compatibility";
+            $keywords = "$titleString $item->volts $item->amps Laptop Charger compatibility";
+
+            $subquery = "SELECT id, refid FROM web_category_page WHERE model = '$titleString' AND service = 'Laptop Charger For'";
+            $parent = DB::connection('mysql-cac')->select($subquery)[0]->id;
+            $refid = DB::connection('mysql-cac')->select($subquery)[0]->refid;
+
+            DB::connection('mysql-cac')->insert('REPLACE INTO web_category_page (name, menu_name, service, url, parent, refid, menu, description, keywords, model)
+                                             VALUES (?,?,?,?,?,?,?,?,?,?)', array($name, $menu_name, $service, $url, $parent, $refid, $menu, $description, $keywords, $model));
+
+            print("$i - $url\n");
+
+            ob_flush();
+            flush();
+        }
+
+        $ret = $items;
+        // return var_dump($ret);
+    }
+
+    public function printerTonerCartridges()
+    {
+        $itemQuery = 'SELECT DISTINCT id, brand, model FROM printers';
+
+        $items = DB::connection('mysql-cac')->select($itemQuery);
+
+        $i = 0;
+
+        foreach ($items as $item) {
+            $i++;
+
+            $titleString = "$item->brand $item->model";
+
+            $name = "$titleString Cartridge - Printer Toners In-Stock Toronto Mississauga";
+            $menu_name = strtoupper($item->model);
+            $service = "Printer Cartridge for";
+            $model = $titleString;
+            $url = str_replace(' ', '-', trim(strtolower($titleString)));
+            $url = urlencode($url).'-cartridge-printer-toner';
+            $menu = 1;
+            $description = "Printer toner cartridges for $titleString in stock. Toronto nr Rogers Centre, Mississauga opposite Square One";
+            $keywords = "Toner Cartridges for $titleString Printer";
+            $refid = $item->id;
+            $priority = -1;
+
+            if ($item->brand == 'Brother') {
+                $parent = 446;
+            }
+            elseif ($item->brand == 'Canon') {
+                $parent = 447;
+            }
+            elseif ($item->brand == 'Lexmark') {
+                $parent = 448;
+            }
+            elseif ($item->brand == 'HP') {
+                $parent = 449;
+            }
+            elseif ($item->brand == 'Samsung') {
+                $parent = 450;
+            }
+
+            DB::connection('mysql-cac')->insert('REPLACE INTO web_category_page (name, menu_name, service, url, parent, refid, menu, description, keywords, model, priority)
+                                             VALUES (?,?,?,?,?,?,?,?,?,?,?)', array($name, $menu_name, $service, $url, $parent, $refid, $menu, $description, $keywords, $model, $priority));
+
+            print("$i - $titleString\n");
+
+            ob_flush();
+            flush();
+        }
+
+        $ret = $items;
+        // return var_dump($ret);
     }
 
 

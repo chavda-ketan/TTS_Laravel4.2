@@ -14,7 +14,7 @@
                                 33 City Centre Dr. Unit #142<br/>
                                 Mississauga, Ontario  L5B 2N5<br/>
                                 905-897-9860<br/>
-                                <br/>
+                                HST# 81032-4079<br/>
                             </p>
                         </td>
 

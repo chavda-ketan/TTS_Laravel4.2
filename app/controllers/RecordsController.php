@@ -23,6 +23,67 @@ class RecordsController extends BaseController
 PAGE FUNCTIONS
  */
 
+    public function quickCount()
+    {
+        $iPhoneSearch = "SELECT COUNT(*) AS Search FROM OrderEntry WHERE Description LIKE '%iphone%' AND Comment LIKE '%CSRH%' AND LastUpdated > '2015-01-01'";
+        $iPhoneRepeat = "SELECT COUNT(*) AS Repeat FROM OrderEntry WHERE Description LIKE '%iphone%' AND Comment LIKE '%CREP%' AND LastUpdated > '2015-01-01'";
+        $iPhoneReferral = "SELECT COUNT(*) AS Referral FROM OrderEntry WHERE Description LIKE '%iphone%' AND Comment LIKE '%CREF%' AND LastUpdated > '2015-01-01'";
+
+        $iPadSearch = "SELECT COUNT(*) AS Search FROM OrderEntry WHERE Description LIKE '%ipad%' AND Comment LIKE '%CSRH%' AND LastUpdated > '2015-01-01'";
+        $iPadRepeat = "SELECT COUNT(*) AS Repeat FROM OrderEntry WHERE Description LIKE '%ipad%' AND Comment LIKE '%CREP%' AND LastUpdated > '2015-01-01'";
+        $iPadReferral = "SELECT COUNT(*) AS Referral FROM OrderEntry WHERE Description LIKE '%ipad%' AND Comment LIKE '%CREF%' AND LastUpdated > '2015-01-01'";
+
+        $samsungSearch = "SELECT COUNT(*) AS Search FROM OrderEntry WHERE Description LIKE '%samsung%' AND Comment LIKE '%CSRH%' AND LastUpdated > '2015-01-01'";
+        $samsungRepeat = "SELECT COUNT(*) AS Repeat FROM OrderEntry WHERE Description LIKE '%samsung%' AND Comment LIKE '%CREP%' AND LastUpdated > '2015-01-01'";
+        $samsungReferral = "SELECT COUNT(*) AS Referral FROM OrderEntry WHERE Description LIKE '%samsung%' AND (Comment LIKE '%CREF%' OR Comment LIKE '%CSAM%') AND LastUpdated > '2015-01-01'";
+
+        $iPhoneSearchResult = DB::connection('mssql-squareone')->select($iPhoneSearch)[0]->Search;
+        $iPhoneRepeatResult = DB::connection('mssql-squareone')->select($iPhoneRepeat)[0]->Repeat;
+        $iPhoneReferralResult = DB::connection('mssql-squareone')->select($iPhoneReferral)[0]->Referral;
+
+        $iPadSearchResult = DB::connection('mssql-squareone')->select($iPadSearch)[0]->Search;
+        $iPadRepeatResult = DB::connection('mssql-squareone')->select($iPadRepeat)[0]->Repeat;
+        $iPadReferralResult = DB::connection('mssql-squareone')->select($iPadReferral)[0]->Referral;
+
+        $samsungSearchResult = DB::connection('mssql-squareone')->select($samsungSearch)[0]->Search;
+        $samsungRepeatResult = DB::connection('mssql-squareone')->select($samsungRepeat)[0]->Repeat;
+        $samsungReferralResult = DB::connection('mssql-squareone')->select($samsungReferral)[0]->Referral;
+
+        $iPhoneTotal = $iPhoneSearchResult + $iPhoneRepeatResult + $iPhoneReferralResult;
+        $iPadTotal = $iPadSearchResult + $iPadRepeatResult + $iPadReferralResult;
+        $samsungTotal = $samsungSearchResult + $samsungRepeatResult + $samsungReferralResult;
+
+        $iPhoneSearchPercentage = $this->percentage($iPhoneSearchResult, $iPhoneTotal, 0);
+        $iPhoneRepeatPercentage = $this->percentage($iPhoneRepeatResult, $iPhoneTotal, 0);
+        $iPhoneReferralPercentage = $this->percentage($iPhoneReferralResult, $iPhoneTotal, 0);
+
+        $iPadSearchPercentage = $this->percentage($iPadSearchResult, $iPadTotal, 0);
+        $iPadRepeatPercentage = $this->percentage($iPadRepeatResult, $iPadTotal, 0);
+        $iPadReferralPercentage = $this->percentage($iPadReferralResult, $iPadTotal, 0);
+
+        $samsungSearchPercentage = $this->percentage($samsungSearchResult, $samsungTotal, 0);
+        $samsungRepeatPercentage = $this->percentage($samsungRepeatResult, $samsungTotal, 0);
+        $samsungReferralPercentage = $this->percentage($samsungReferralResult, $samsungTotal, 0);
+
+        echo "<h2>iPhone - January 2015-Present</h2>
+              $iPhoneSearchResult Search - $iPhoneSearchPercentage%<br>
+              $iPhoneRepeatResult Repeat - $iPhoneRepeatPercentage%<br>
+              $iPhoneReferralResult Referral - $iPhoneReferralPercentage%<br>
+              $iPhoneTotal Total<br><br>
+
+              <h2>iPad - January 2015-Present</h2>
+              $iPadSearchResult Search - $iPadSearchPercentage%<br>
+              $iPadRepeatResult Repeat - $iPadRepeatPercentage%<br>
+              $iPadReferralResult Referral - $iPadReferralPercentage%<br>
+              $iPadTotal Total<br><br>
+
+              <h2>Samsung - January 2015-Present</h2>
+              $samsungSearchResult Search - $samsungSearchPercentage%<br>
+              $samsungRepeatResult Repeat - $samsungRepeatPercentage%<br>
+              $samsungReferralResult Referral - $samsungReferralPercentage%<br>
+              $samsungTotal Total";
+    }
+
     public function showDeltaReport()
     {
         $data['seo'] = $data['ppc'] = '';
@@ -81,16 +142,18 @@ PAGE FUNCTIONS
         $data['trends'] = array();
 
         $data['dates'] = $data['total'] =  $data['repeat'] = $data['referral'] = $data['error'] =
-        $data['revenue'] = $data['spend'] = $data['chartdata'] = $data['search'] =
-        $data['trends']['search'] = $data['trends']['repeat'] = $data['trends']['referral'] = '';
+        $data['revenue'] = $data['spend'] = $data['chartdata'] = $data['search'] = $data['samsung'] =
+        $data['trends']['search'] = $data['trends']['repeat'] = $data['trends']['referral'] =
+        $data['trends']['samsung'] = '';
 
-        $days = $absoluteSearchTotal = $absoluteRepeatTotal = $absoluteReferralTotal = 0;
+        $days = $absoluteSearchTotal = $absoluteRepeatTotal = $absoluteReferralTotal = $absoluteSamsungTotal = 0;
 
         foreach ($dailyTotals as $day => $metrics) {
             $days++;
             $total = count($metrics['total']['t']) + count($metrics['total']['m']);
             $repeat = count($metrics['repeat']['t']) + count($metrics['repeat']['m']);
             $referral = count($metrics['referral']['t']) + count($metrics['referral']['m']);
+            $samsung = count($metrics['samsung']['t']) + count($metrics['samsung']['m']);
             $search = count($metrics['search']['t']) + count($metrics['search']['m']);
 
             /* Work order revenue */
@@ -100,7 +163,7 @@ PAGE FUNCTIONS
                 $dividedRevenue = round($combinedRevenue / $total, 2);
             }
 
-            $search = $total - $repeat - $referral;
+            $search = $total - $repeat - $referral - $samsung;
             $error = 0;
             // $error = $total - $search - $repeat - $referral;
 
@@ -108,6 +171,7 @@ PAGE FUNCTIONS
             $absoluteSearchTotal = $search + $absoluteSearchTotal;
             $absoluteRepeatTotal = $repeat + $absoluteRepeatTotal;
             $absoluteReferralTotal = $referral + $absoluteReferralTotal;
+            $absoluteSamsungTotal = $samsung + $absoluteSamsungTotal;
 
             /* Adwords spend */
             $adwordsPerCustomer = 0;
@@ -122,12 +186,14 @@ PAGE FUNCTIONS
             $trendSearch = $this->searchRunningAverage($day);
             $trendRepeat = round($absoluteRepeatTotal / $days, 1);
             $trendReferral = round($absoluteReferralTotal / $days, 1);
+            $trendSamsung = round($absoluteSamsungTotal / $days, 1);
 
             $data['dates'] .= "'$day', ";
             $data['total'] .= "$total, ";
             $data['search'] .= "$search, ";
             $data['repeat'] .= "$repeat, ";
             $data['referral'] .= "$referral, ";
+            $data['samsung'] .= "$samsung, ";
             $data['error'] .= "$error, ";
             $data['revenue'] .= "$dividedRevenue, ";
             $data['spend'] .= "$adwordsPerCustomer, ";
@@ -135,10 +201,11 @@ PAGE FUNCTIONS
             $data['trends']['search'] .= "$trendSearch,";
             $data['trends']['repeat'] .= "$trendRepeat,";
             $data['trends']['referral'] .= "$trendReferral,";
+            $data['trends']['samsung'] .= "$trendSamsung,";
         }
 
         $data['avg'] = $this->getAverages($absoluteSearchTotal, $absoluteRepeatTotal,
-                                          $absoluteReferralTotal, $days,
+                                          $absoluteReferralTotal, $absoluteSamsungTotal, $days,
                                           $data['start'], $data['end']);
 
         $data['showpicker'] = 1;
@@ -446,7 +513,7 @@ MATH FUNCTIONS
  */
 
     protected function getAverages($absoluteSearchTotal, $absoluteRepeatTotal,
-                                   $absoluteReferralTotal, $days, $start, $end)
+                                   $absoluteReferralTotal, $absoluteSamsungTotal, $days, $start, $end)
     {
         $average = array();
         $rangeSpend = $this->getAdwordsRangeAverage($start, $end);
@@ -462,6 +529,9 @@ MATH FUNCTIONS
 
         $averageReferral = $absoluteReferralTotal / $days;
         $averages['referral'] = round($averageReferral, 2);
+
+        $averageSamsung = $absoluteSamsungTotal / $days;
+        $averages['samsung'] = round($averageSamsung, 2);
 
         return $averages;
     }
@@ -489,6 +559,7 @@ DATE RANGE FUNCTIONS
             $rangeOutput[$date]['total'] = $this->getTotalCustomersForDay($day);
             $rangeOutput[$date]['repeat'] = $this->getRepeatCustomersForDay($day);
             $rangeOutput[$date]['referral'] = $this->getReferralCustomersForDay($day);
+            $rangeOutput[$date]['samsung'] = $this->getSamsungCustomersForDay($day);
             $rangeOutput[$date]['search'] = $this->getSearchCustomersForDay($day);
         }
 
@@ -529,6 +600,13 @@ DATE RANGE FUNCTIONS
         return $queryResults;
     }
 
+    protected function getSamsungCustomersForMonth($month, $year)
+    {
+        $dates = $this->monthDateRange($month, $year);
+        $queryResults = $this->samsungCustomerQueryRange($dates['first'], $dates['last']);
+        return $queryResults;
+    }
+
     protected function getSearchCustomersForMonth($month, $year)
     {
         $dates = $this->monthDateRange($month, $year);
@@ -558,6 +636,14 @@ DATE RANGE FUNCTIONS
         $start = $day->format("Y-m-d 00:00:00.000");
         $end = $day->format("Y-m-d 23:59:59.000");
         $queryResults = $this->referralCustomerQueryRange($start, $end);
+        return $queryResults;
+    }
+
+    protected function getSamsungCustomersForDay($day)
+    {
+        $start = $day->format("Y-m-d 00:00:00.000");
+        $end = $day->format("Y-m-d 23:59:59.000");
+        $queryResults = $this->samsungCustomerQueryRange($start, $end);
         return $queryResults;
     }
 
@@ -657,6 +743,40 @@ DATABASE QUERIES - REPEATS AND ADWORDS REPORT
                 AND ID IN
                 (
                     SELECT OrderID From OrderEntry WHERE Comment LIKE '%CREF%'
+                )
+                AND ID NOT IN
+                (
+                    SELECT OrderEntryID FROM OrderRework
+                )
+                AND Time >= '$startDate'
+                AND Time <= '$endDate'
+                ORDER BY CustomerID";
+
+        $results['m'] = DB::connection('mssql-squareone')->select($query);
+        $results['t'] = DB::connection('mssql-toronto')->select($query);
+        // $results['t'] = array();
+
+        $results = $this->addLocation($results);
+
+        return $results;
+    }
+
+    protected function samsungCustomerQueryRange($startDate, $endDate)
+    {
+        $query = "SELECT DISTINCT CustomerID FROM [Order]
+                WHERE CustomerID IN
+                (
+                        SELECT CustomerID FROM [Order]
+                        WHERE Time >= '$startDate'
+                        AND Time <= '$endDate'
+                )
+                AND ID IN
+                (
+                    SELECT OrderHistory.OrderID FROM OrderHistory
+                )
+                AND ID IN
+                (
+                    SELECT OrderID From OrderEntry WHERE Comment LIKE '%CSAM%'
                 )
                 AND ID NOT IN
                 (

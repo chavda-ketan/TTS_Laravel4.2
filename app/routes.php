@@ -82,7 +82,6 @@ Route::get('inventory/test/{id}', 'InventoryController@inventoryTransferTest');
 
 
 /* Account statements */
-Route::get('statement/test', 'StatementController@jasonTest');
 Route::get('statement/invoice', 'StatementController@invoice');
 Route::get('statement/overdue', 'StatementController@overdue');
 Route::get('statement/overdue/admin', 'StatementController@overdueAdmin');
@@ -98,6 +97,12 @@ Route::get('statement/nb','StatementController@testNorthbridge');
 Route::get('statement/balances', 'StatementController@outstandingBalances');
 Route::get('statement/credit', 'StatementController@creditCustomers');
 
+Route::get('statement/send', 'StatementController@sendReceiptForm');
+Route::post('statement/send', 'StatementController@sendSingleReceipt');
+
+Route::get('statement/send2', 'StatementController@sendStatementForm');
+Route::post('statement/send2', 'StatementController@sendSingleStatement');
+
 /* temporary junk */
 Route::get('statement/edit', 'StatementController@creditCustomerEditList');
 Route::get('statement/edit/{location}/{id}', 'StatementController@editCreditCustomer');
@@ -106,6 +111,8 @@ Route::post('statement/edit/{location}/{id}/save', 'StatementController@saveCred
 /* Model breakdown */
 Route::get('records/breakdown/dump', 'RecordsController@testBreakdown');
 Route::get('records/breakdown', 'RecordsController@iPhoneBreakdown');
+
+Route::get('records/quick', 'RecordsController@quickCount');
 
 
 Route::get('formlog','MailController@websiteFormLog');
@@ -131,7 +138,11 @@ Route::get('noseries', 'ShitController@laptopScreensNoSeries');
 Route::get('noseries2', 'ShitController@laptopScreensNoSeries2');
 Route::get('noseries3', 'ShitController@laptopScreensNoSeries3');
 
+Route::get('charger', 'ShitController@laptopChargerSeries');
+Route::get('charger2', 'ShitController@laptopChargerModels');
+Route::get('charger3', 'ShitController@laptopChargerSubpage');
 
+Route::get('cartridge', 'ShitController@printerTonerCartridges');
 
 Route::get('phonebattery', 'ShitController@phoneBatteries');
 Route::get('toners', 'ShitController@tonerCartridges');
@@ -139,6 +150,7 @@ Route::get('toners', 'ShitController@tonerCartridges');
 Route::get('laptopbattery', 'ShitController@batterySeries');
 Route::get('laptopbattery2', 'ShitController@batteryModels');
 
+Route::get('close', 'ShitController@batchCloseWorkOrders');
 
 /* Customer Kiosk helpers */
 Route::post('customer/add', 'RecordsController@addCustomer');
