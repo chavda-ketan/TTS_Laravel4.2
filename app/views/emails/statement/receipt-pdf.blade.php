@@ -31,14 +31,14 @@
     <table>
         @if(isset($orderEntry))
             @foreach($orderEntry as $lineItem)
-                <tr>
-                    <td style="width:70%;">
+                <tr style="width: 100%;">
+                    <td style="width:600px;">
                         <b>{{ $lineItem->Description }}</b><br>
                         @if($lineItem->Comment)
                             {{ $lineItem->Comment }}
                         @endif
                     </td>
-                    <td>
+                    <td style="float: right">
                         <b>${{ number_format((float) $lineItem->Price, 2, '.', '') }}</b>
                     </td>
                 </tr>
@@ -48,8 +48,8 @@
 
         @if(isset($lineItems))
             @foreach($lineItems as $lineItem)
-                <tr>
-                    <td style="width:70%;">
+                <tr style="width: 100%;">
+                    <td style="width:600px;">
                         <b>{{ $lineItem->Description }}</b><br>
                         @if($lineItem->Comment)
                             {{ $lineItem->Comment }}
@@ -64,11 +64,23 @@
         @endif
     </table>
     <hr>
-    <b>Subtotal:</b> ${{ number_format((float) $order->Total - $order->Tax, 2, '.', '') }}<br>
-    <b>HST 13%:</b> ${{ number_format((float) $order->Tax, 2, '.', '') }}<br>
-    <b>Total:</b> ${{ number_format((float) $order->Total, 2, '.', '') }}<br>
+    <table>
+        <tr style="width: 100%;">
+            <td style="width: 600px;">
+                <b>Subtotal</b><br>
+                <b>HST 13%</b><br>
+                <b>Total</b><br>
+            </td>
+            <td>
+                ${{ number_format((float) $order->Total - $order->Tax, 2, '.', '') }}<br>
+                ${{ number_format((float) $order->Tax, 2, '.', '') }}<br>
+                ${{ number_format((float) $order->Total, 2, '.', '') }}<br>
+            </td>
+        </tr>
+
     {{-- <b>Tendered:</b>      ${{ number_format((float) $tender[0]->Amount, 2, '.', '') }} - {{ $tender[0]->Description }}<br> --}}
     {{-- <b>Pending Charges:</b>  $575.00<br> --}}
+    </table>
 
     <br>
     <br>

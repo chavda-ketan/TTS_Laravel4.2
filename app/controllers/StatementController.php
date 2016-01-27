@@ -293,7 +293,7 @@ class StatementController extends BaseController {
         $data['tender'] = $tender;
 
         $storagePath = storage_path().'/';
-        $fileName = $customer->EmailAddress.'-receipt.pdf';
+        $fileName = "$customer->EmailAddress-$transactionNumber-receipt.pdf";
         $fullReceiptPath = $storagePath.$fileName;
 
         PDF::loadView('emails.statement.receipt-pdf', $data)->save($fullReceiptPath);
@@ -346,9 +346,6 @@ class StatementController extends BaseController {
         Mail::send('emails.statement.combinedreceipt', $data, function ($message) use ($mailto) {
             $message->from('service@techknowspace.com', 'The TechKnow Space');
             $message->to($mailto['email'])->subject('Your Invoice - '.$mailto['company']);
-            // $message->to('ash@techknowspace.com')->subject('Your Invoice - '.$mailto['company']);
-            // $message->to('kirtaner@me.com')->subject('Your Invoice - '.$mailto['company']);
-            // $message->to('jason@techknowspace.com')->subject('Your Invoice - '.$mailto['company']);
 
             if (isset($mailto['cc']) && $mailto['cc'] != $mailto['email']) {
                 $message->cc(['b2badmin@techknowspace.com',$mailto['cc']]);
@@ -415,8 +412,8 @@ class StatementController extends BaseController {
     public function accountStatementCron()
     {
         //$query = "SELECT * FROM Customer WHERE CreditLimit > 0 AND Company != 'StatPro Canada'";
-        // $query = "SELECT * FROM Customer WHERE AccountBalance > 0";
         $query = "SELECT * FROM Customer WHERE AccountBalance > 0";
+        // $query = "SELECT * FROM Customer WHERE AccountBalance > 0 AND Company = 'StatPro Canada'";
 
         $customersS1 = DB::connection('mssql-squareone')->select($query);
         $customersTO = DB::connection('mssql-toronto')->select($query);
@@ -430,9 +427,12 @@ class StatementController extends BaseController {
             $statements[$customer->EmailAddress]['name'] = $customer->Company;
 
             $statements[$customer->EmailAddress]['balance'] = $rendered[1];
+
             if (isset($customer->Email2)) {
                 $statements[$customer->EmailAddress]['cc'] = $customer->Email2;
             }
+
+            $statements[$customer->EmailAddress]['transactionNumbers'] = $rendered[3];
         }
 
         foreach ($customersTO as $customer) {
@@ -450,6 +450,12 @@ class StatementController extends BaseController {
             if (isset($customer->Email2)) {
                 $statements[$customer->EmailAddress]['cc'] = $customer->Email2;
             }
+
+            if (isset($statements[$customer->EmailAddress]['transactionNumbers'][0])) {
+                $statements[$customer->EmailAddress]['transactionNumbers'] = array_merge($statements[$customer->EmailAddress]['transactionNumbers'], $rendered[3]);
+            } else {
+                $statements[$customer->EmailAddress]['transactionNumbers'] = $rendered[3];
+            }
         }
 
         foreach ($statements as $email => $statement) {
@@ -461,10 +467,10 @@ class StatementController extends BaseController {
 
     public function sendConsolidatedStatements($email, $statements, $manual = false)
     {
-        // $data['statements'] = $statements['statement'];
         $data['balance'] = $statements['balance'];
         $data['pdf'] = $statements['pdf'];
         $data['month'] = date('F');
+        $transactions = $statements['transactionNumbers'];
 
         $storagePath = storage_path().'/';
         $fileName = $email.'-statement.pdf';
@@ -472,9 +478,18 @@ class StatementController extends BaseController {
 
         PDF::loadView('emails.statement.combinedstatement', $data)->save($fullInvoicePath);
 
+        $attachments[] = $fullInvoicePath;
+
+        foreach ($transactions as $transaction) {
+            $fileName = "$email-$transaction-receipt.pdf";
+            $fullReceiptPath = $storagePath.$fileName;
+
+            $attachments[] = $fullReceiptPath;
+        }
+
         $mailto = array(
             'email' => $email,
-            'attachment' => $fullInvoicePath,
+            'attachments' => $attachments,
             'name' => $statements['name']
         );
 
@@ -485,6 +500,8 @@ class StatementController extends BaseController {
         if ($manual) {
             $mailto['email'] = 'jason@techknowspace.com';
             $mailto['cc'] = 'jason@techknowspace.com';
+            // $mailto['email'] = 'acottle@taimalabs.com';
+            // $mailto['cc'] = 'acottle@taimalabs.com';
         }
 
         Mail::send('emails.statement.finalstatement', $data, function ($message) use ($mailto) {
@@ -498,14 +515,12 @@ class StatementController extends BaseController {
                 $message->cc('b2badmin@techknowspace.com');
             }
 
-            $message->attach($mailto['attachment']);
+            $message->to('acottle@taimalabs.com')->subject('Account Statement - '.$mailto['name']);
 
-            // $message->to('jason@techknowspace.com')->subject('Account Statement - '.$mailto['name']);
-
-            // $size = sizeOf($mailto['path']);
-            // for($i=0; $i < $size; $i++){
-                // $message->attach($mailto['path'][$i]);
-            // }
+            $size = sizeOf($mailto['attachments']);
+            for($i=0; $i < $size; $i++){
+                $message->attach($mailto['attachments'][$i]);
+            }
         });
 
     }
@@ -534,6 +549,7 @@ class StatementController extends BaseController {
 
         $data['transactions'] = [];
         $data['payments'] = [];
+        $transactionNumbers = [];
 
         $balance = 0;
         $payments = 0;
@@ -551,6 +567,10 @@ class StatementController extends BaseController {
             $data['transactions'][$transactionNumber]['orderentry'] = $orderEntryDescriptions;
             $balance = $balance + $accountReceivableHistoryEntry->Amount;
             $data['transactions'][$transactionNumber]['newBalance'] = $balance;
+
+            $this->generateReceipt($database, $customerId, $transactionNumber);
+
+            $transactionNumbers[] = $transactionNumber;
         }
 
         foreach ($paymentHistory as $payment) {
@@ -583,7 +603,7 @@ class StatementController extends BaseController {
         $pdfview = View::make('emails.statement.accountstatement-pdf', $data);
         $pdfcontents = (string) $pdfview;
 
-        return array($contents, $customer->AccountBalance, $pdfcontents);
+        return array($contents, $customer->AccountBalance, $pdfcontents, $transactionNumbers);
     }
 
     // make these two a bit cleaner later

@@ -1,6 +1,6 @@
 
-<table class="body-wrap" bgcolor="#fff">
-    <tr>
+<table class="body-wrap" bgcolor="#fff" >
+    <tr style="page-break-after: always;">
         <td></td>
         <td class="container" bgcolor="#FFFFFF">
 
@@ -35,7 +35,7 @@
                     <tbody>
                         <tr>
                             <td>
-                                <h2 style="font-size: 160%;">Account Summary - {{ date('F j Y') }} - {{ $location }}</h2>
+                                <h2 style="font-size: 160%;">Account Summary - {{ date('F j Y', strtotime("yesterday")) }} - {{ $location }}</h2>
                                 <p>
                                 </p>
                             </td>
@@ -62,8 +62,8 @@
                                     </td>
 
                                     <td style="width: 25%">
-                                        Previous Balance: <br/>
-                                        Add New Charges: <br/>
+                                        Balance {{ date('M j Y', strtotime("last day of previous month")) }}: <br/>
+                                        {{ date('F Y', strtotime("yesterday")) }} Charges: <br/>
                                         Less Credits / Payments: <br/>
                                         =======================<br/>
                                         New Balance: <br/>
@@ -132,7 +132,7 @@
                             <td>15/{{ date("m/Y", strtotime("+1 month", strtotime($transaction['entry']->Date))) }}</td>
                             <td>
                                 Invoice Total<br/>
-                                @foreach($transaction['orderentry'] as $lineItem)
+                                {{--  @foreach($transaction['orderentry'] as $lineItem)
                                     {{ $lineItem->Description }}<br/>
                                     @if($lineItem->Comment)
                                         &nbsp;&nbsp;-&nbsp;{{ $lineItem->Comment }}<br/>
@@ -144,7 +144,7 @@
                                     @if($lineItem->Comment)
                                         &nbsp;&nbsp;-&nbsp;{{ $lineItem->Comment }}<br/>
                                     @endif
-                                @endforeach
+                                @endforeach --}}
                             </td>
                             <td>${{ number_format((float) $transaction['entry']->Amount, 2, '.', '') }}</td>
                             <td></td>

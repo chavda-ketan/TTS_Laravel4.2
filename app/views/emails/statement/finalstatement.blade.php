@@ -227,7 +227,7 @@ td {
             <!-- remittance -->
             <div class="content">
                 <p style="font-size: 15px">
-                    Please find attached your {{ $month }} end-of-month statement. This includes transactions completed at all our locations.<br/><br/>
+                    Please find attached your {{ $month }} end-of-month statement and invoices. This includes transactions completed at all our locations.<br/><br/>
                     Statement balances are due by the 15th of the following month.<br/><br/>
                     Please remit your payment in the amount of ${{ number_format((float) $balance, 2, '.', '') }} to:<br/><br/>
                     <b style="font-size: 110%">The TechKnow Space Inc.</b><br/>
