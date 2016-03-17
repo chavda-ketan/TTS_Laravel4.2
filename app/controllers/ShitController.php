@@ -2,6 +2,27 @@
 
 class ShitController extends BaseController
 {
+    public function getItemData()
+    {
+        $query = "SELECT * FROM Item WHERE ID IN ('3133','3134', '3033','3203', '3197', '3195',  '3167', '3141', '3143', '3135', '3173','3172', '3136','3201', '3140', '3137', '3200','7601','7603','7432','7599', '7430', '7752','3168', '3170','3169' )";
+
+        $items = DB::connection('mssql-squareone')->select($query);
+
+        foreach ($items as $item) {
+            echo "$item->ID - $item->Description - $item->ItemLookupCode <br>";
+        }
+        echo "<br><br> MISC <br><br>";
+
+        $query = "SELECT * FROM Item WHERE ID IN ('3049', '3139', '3199', '3198', '3138', '3171')";
+
+        $items = DB::connection('mssql-squareone')->select($query);
+
+        foreach ($items as $item) {
+            echo "$item->ID - $item->Description - $item->ItemLookupCode <br>";
+        }
+
+    }
+
     public function batchCloseWorkOrders()
     {
         $query = "SELECT * FROM [OrderManagement] WHERE Staticupdate < '2015-10-01 12:00:00:000' AND (StatusID = 14 OR StatusID = 24)";

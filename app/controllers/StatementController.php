@@ -165,7 +165,7 @@ class StatementController extends BaseController {
                 $receipt['cc'] = $customer->Email2;
             }
 
-            $this->mailReceipts($receipt, $customer->EmailAddress);
+            // $this->mailReceipts($receipt, $customer->EmailAddress);
         }
 
         foreach ($customersTO as $customer) {
@@ -178,7 +178,7 @@ class StatementController extends BaseController {
                 $receipt['cc'] = $customer->Email2;
             }
 
-            $this->mailReceipts($receipt, $customer->EmailAddress);
+            // $this->mailReceipts($receipt, $customer->EmailAddress);
         }
 
         return 'ok';
@@ -226,6 +226,7 @@ class StatementController extends BaseController {
             $receipts[$customer->EmailAddress]['company'] = $customer->Company;
             $receipts[$customer->EmailAddress]['receipts'][] = $rendered;
 
+
             if (isset($customer->Email2)) {
                 $receipts[$customer->EmailAddress]['cc'] = $customer->Email2;
             }
@@ -233,26 +234,6 @@ class StatementController extends BaseController {
 
         foreach ($customers['customersTO'] as $customer) {
             $rendered = $this->generateReceipt('mssql-toronto', $customer->ID, $customer->TransactionNumber);
-            $receipts[$customer->EmailAddress]['company'] = $customer->Company;
-            $receipts[$customer->EmailAddress]['receipts'][] = $rendered;
-
-            if (isset($customer->Email2)) {
-                $receipts[$customer->EmailAddress]['cc'] = $customer->Email2;
-            }
-        }
-
-        foreach ($receipts as $email => $receipt) {
-            $this->mailReceipts($receipt, $email);
-        }
-
-        return;
-    }
-    public function processReceiptsFake($customers)
-    {
-        $receipts = [];
-
-        foreach ($customers['customersS1'] as $customer) {
-            $rendered = $this->generateReceipt('mssql-squareone', $customer->ID, '31674');
             $receipts[$customer->EmailAddress]['company'] = $customer->Company;
             $receipts[$customer->EmailAddress]['receipts'][] = $rendered;
 
@@ -284,6 +265,21 @@ class StatementController extends BaseController {
 
         if (isset($lineItemsForTransaction[0])) {
             $data['lineItems'] = $lineItemsForTransaction;
+        }
+
+        // edge case where a business account only purchased retail items in a transaction
+        if (isset($lineItemsForTransaction[0]) && !isset($orderEntryDescriptions[0])) {
+            $total = 0;
+
+            foreach($lineItemsForTransaction as $lineItem) {
+                $total = $total + $lineItem->Price;
+            }
+
+            $tax = $total * 1.13 - $total;
+
+            $data['order'] = new stdClass();
+            $data['order']->Total = $total + $tax;
+            $data['order']->Tax = $tax;
         }
 
         $data['transaction'] = $transaction;
@@ -382,6 +378,8 @@ class StatementController extends BaseController {
             if (isset($customer->Email2)) {
                 $statements[$customer->EmailAddress]['cc'] = $customer->Email2;
             }
+
+            $statements[$customer->EmailAddress]['transactionNumbers'] = $rendered[3];
         }
 
         foreach ($customersTO as $customer) {
@@ -398,6 +396,12 @@ class StatementController extends BaseController {
             if (isset($customer->Email2)) {
                 $statements[$customer->EmailAddress]['cc'] = $customer->Email2;
             }
+
+            if (isset($statements[$customer->EmailAddress]['transactionNumbers'][0])) {
+                $statements[$customer->EmailAddress]['transactionNumbers'] = array_merge($statements[$customer->EmailAddress]['transactionNumbers'], $rendered[3]);
+            } else {
+                $statements[$customer->EmailAddress]['transactionNumbers'] = $rendered[3];
+            }
         }
 
         foreach ($statements as $email => $statement) {
@@ -412,8 +416,8 @@ class StatementController extends BaseController {
     public function accountStatementCron()
     {
         //$query = "SELECT * FROM Customer WHERE CreditLimit > 0 AND Company != 'StatPro Canada'";
-        $query = "SELECT * FROM Customer WHERE AccountBalance > 0";
-        // $query = "SELECT * FROM Customer WHERE AccountBalance > 0 AND Company = 'StatPro Canada'";
+        $query = "SELECT * FROM Customer WHERE AccountBalance > 0 AND Company != 'W3 Solutions'";
+        // $query = "SELECT * FROM Customer WHERE AccountBalance > 0 AND Company = 'Workopolis'";
 
         $customersS1 = DB::connection('mssql-squareone')->select($query);
         $customersTO = DB::connection('mssql-toronto')->select($query);
@@ -459,7 +463,7 @@ class StatementController extends BaseController {
         }
 
         foreach ($statements as $email => $statement) {
-            $this->sendConsolidatedStatements($email, $statement, 0);
+           $this->sendConsolidatedStatements($email, $statement, 0);
         }
 
         return 'ok';
@@ -469,7 +473,7 @@ class StatementController extends BaseController {
     {
         $data['balance'] = $statements['balance'];
         $data['pdf'] = $statements['pdf'];
-        $data['month'] = date('F');
+        $data['month'] = date('F', strtotime('-1 month'));
         $transactions = $statements['transactionNumbers'];
 
         $storagePath = storage_path().'/';
@@ -498,10 +502,8 @@ class StatementController extends BaseController {
         }
 
         if ($manual) {
-            $mailto['email'] = 'jason@techknowspace.com';
-            $mailto['cc'] = 'jason@techknowspace.com';
-            // $mailto['email'] = 'acottle@taimalabs.com';
-            // $mailto['cc'] = 'acottle@taimalabs.com';
+            $mailto['email'] = 'acottle@taimalabs.com';
+            $mailto['cc'] = 'acottle@taimalabs.com';
         }
 
         Mail::send('emails.statement.finalstatement', $data, function ($message) use ($mailto) {
@@ -515,7 +517,7 @@ class StatementController extends BaseController {
                 $message->cc('b2badmin@techknowspace.com');
             }
 
-            $message->to('acottle@taimalabs.com')->subject('Account Statement - '.$mailto['name']);
+            //$message->to('acottle@taimalabs.com')->subject('Account Statement - '.$mailto['name']);
 
             $size = sizeOf($mailto['attachments']);
             for($i=0; $i < $size; $i++){

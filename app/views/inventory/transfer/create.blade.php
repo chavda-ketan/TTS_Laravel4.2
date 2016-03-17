@@ -330,8 +330,8 @@ $(function(){
         $('#search').submit();
     });
 
-    $("#phone").click(function() {
-        $('#department').val('All').change()
+    $("#phone").on('click', function() {
+        $('#department').val('All').change();
         $('#category').val('Phone Battery');
         $('#search').submit();
     });

@@ -1,7 +1,7 @@
 @extends('main')
 
 @section('content')
-<h2>Add Supplier</h2>
+<h2>Add Category</h2>
 
 <form method="post" action="supplier" class="form-horizontal" role="form">
     <div class="col-sm-6">

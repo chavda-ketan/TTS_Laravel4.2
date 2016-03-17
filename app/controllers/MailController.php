@@ -44,6 +44,10 @@ class MailController extends BaseController
         return View::make('reports.maillog', $data);
     }
 
+    public function b2bEmailForm(){
+        return View::make('emails.b2bform');
+    }
+
     protected function addCustomerDetailsToRow($customer, $name)
     {
         $customer->firstName = $name->firstName;
@@ -180,6 +184,65 @@ class MailController extends BaseController
         }
     }
 
+    public function sendb2bEmail() {
+
+        $data = [ 'name' => 'Denis'];
+
+        Mail::send('emails.b2bemail', $data, function ($message) {
+            $message->to('kdenis@gmail.com', 'Denis Kumbaradzi')->subject('This is a test email');
+        } );
+        // return View::make('emails.b2bemail', $data);
+
+
+    }
+
+    public function sendAnEmail()
+    {
+        $blah = ['name' => 'denis',
+                 'service' => 'Blahblah',
+                 'date' => 'February 2nd'];
+        Mail::send('emails.thankyou', $blah, function ($message) {
+            $message->to('kdenis@gmail.com', 'Denis Kumbaradzi')->subject('This is a test email');
+        } );
+    }
+
+    public function testquery() {
+        $test = "SELECT Customer.FirstName AS firstName, Customer.LastName AS lastName, Customer.City AS city FROM Customer WHERE Len(firstName) < 6
+                 AND Len(city) > 0
+                 ORDER BY Customer.ID, city ASC;";
+
+        $customers = DB::connection('mssql-squareone')->select($test);
+
+        // for ($i = 0; $i < 4; $i++) {
+        //     print_r($customers[$i]);
+        // }
+
+
+        $data['customers'] = $customers;
+
+        Mail::send('tests.denis1', $data, function($message) {
+            $message->to('kdenis@gmail.com', 'Denis Kumbaradzi')->subject('This is another test email');
+
+        });
+
+        return View::make('tests.denis1', $data);
+
+        // foreach ($customers as $example) {
+        //     echo $example->firstName;
+        // }
+    }
+
+    public function inputtest () {
+
+        $firstName = Input::get('first');
+        $lastName = Input::get('last');
+
+        $data['firstName'] = $firstName;
+        $data['lastName'] = $lastName;
+
+        return View::make('tests.inputtest', $data);
+    }
+
     public function getBusinessEmails()
     {
         $pattern = '(gmail.com|hotmail.com|yahoo.com|ymail.com|sympatico.ca|rogers.com|live.ca'
@@ -194,10 +257,18 @@ class MailController extends BaseController
                                                               ORDER BY email_open_date DESC,
                                                               google_click_date DESC");
 
+        echo var_dump($customers);
+
         foreach ($customers as $customer) {
-            $customerNameQuery = "SELECT OrderID, Customer.FirstName AS firstName, Customer.LastName AS lastName,
-                Customer.EmailAddress AS emailAddress, Customer.Company as company FROM [Order], Customer, OrderEntry
-                WHERE Customer.ID=[Order].CustomerID AND OrderEntry.OrderID=[Order].ID AND OrderID = $customer->wo_id";
+            $customerNameQuery = "SELECT OrderID,
+                                    Customer.FirstName AS firstName,
+                                    Customer.LastName AS lastName,
+                                    Customer.EmailAddress AS emailAddress,
+                                    Customer.Company as company
+                                  FROM [Order], Customer, OrderEntry
+                                  WHERE Customer.ID=[Order].CustomerID
+                                  AND OrderEntry.OrderID=[Order].ID
+                                  AND OrderID = $customer->wo_id";
 
             if ($customer->s == 't') {
                 $db = 'mssql-toronto';

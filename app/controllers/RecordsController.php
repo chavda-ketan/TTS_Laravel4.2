@@ -1306,9 +1306,10 @@ Leaderboard
  Customer Kiosk Helpers
  */
 
-    function addCustomer()
+    function addCustomer($location)
     {
         $customerData = Input::get();
+        $database = "mssql-$location";
 
         $mobile = $customerData['mobile'];
         $formattedMobile = substr($mobile,0,3)." ".substr($mobile,3,3)." ".substr($mobile,6);
@@ -1319,7 +1320,19 @@ Leaderboard
 
         $phoneString = "$formattedMobile $formattedPhone";
 
-        DB::connection('mssql-squareone')->table('Customer')->insert(
+        if (isset($customerData['address'])) {
+            $address = $customerData['address'];
+        } else {
+            $address = '';
+        }
+
+        if (isset($customerData['city'])) {
+            $city = $customerData['city'];
+        } else {
+            $city = '';
+        }
+
+        DB::connection($database)->table('Customer')->insert(
             array(
                 'AccountNumber' => $formattedMobile,
                 'PhoneNumber' => $phoneString,
@@ -1329,8 +1342,8 @@ Leaderboard
                 'FirstName' => $customerData['first'],
                 'LastName' => $customerData['last'],
                 'Company' => $company,
-                // 'Address' => $customerData['address'],
-                // 'City' => $customerData['city'],
+                'Address' => $address,
+                'City' => $city,
                 // 'State' => $customerData['province'],
                 'Zip' => $customerData['postal'],
                 // 'Country' => $customerData['country'],

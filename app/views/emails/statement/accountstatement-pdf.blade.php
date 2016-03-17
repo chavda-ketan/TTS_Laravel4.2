@@ -9,7 +9,7 @@
                 <table>
                     <tr>
                         <td style="width: 50%">
-                            <h2 style="font-size: 160%;">The Techknow Space Inc.</h2>
+                            <h2 style="font-size: 160%;">The TechKnow Space Inc.</h2>
                             <p>
                                 33 City Centre Dr. Unit #142<br/>
                                 Mississauga, Ontario  L5B 2N5<br/>

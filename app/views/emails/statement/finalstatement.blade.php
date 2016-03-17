@@ -227,8 +227,10 @@ td {
             <!-- remittance -->
             <div class="content">
                 <p style="font-size: 15px">
-                    Please find attached your {{ $month }} end-of-month statement and invoices. This includes transactions completed at all our locations.<br/><br/>
-                    Statement balances are due by the 15th of the following month.<br/><br/>
+                    Please find attached your {{ $month }} end-of-month statement. This statement has the following attachments:<br/><br/>
+                    <span style="font-size: 15px; margin-left: 20px; display: inline-block; padding-bottom:10px;">1. Statement of Account that identifies and itemizes your invoices for transactions completed at both our locations, along with payments received during the month.</span> <br />
+                    <span style="font-size: 15px; margin-left: 20px; display: inline-block; padding-bottom:10px;">2. One atachment per invoice issued during the month. For example, there would be 5 attachments for 5 invoices issued during the month.</span> <br /> <br />
+                    Statement balances are due by the 15th of the following month.<br/>
                     Please remit your payment in the amount of ${{ number_format((float) $balance, 2, '.', '') }} to:<br/><br/>
                     <b style="font-size: 110%">The TechKnow Space Inc.</b><br/>
                     33 City Centre Dr Unit #142<br/>
@@ -242,4 +244,4 @@ td {
     </tr>
 </table>
 </body>
-</html>
+</html> 

@@ -26,6 +26,8 @@ Route::get('records/repeats', 'RecordsController@showRepeatCustomerReport');
 Route::get('records/repeats/debug', 'RecordsController@debug');
 Route::get('lookup', 'RecordsController@customerLookup');
 
+Route::post('statement/credithistory', 'AccountController@getBusinessWorkOrders');
+
 /* Landing page records */
 Route::get('records/landing', 'RecordsController@showLandingPageReport');
 Route::post('records/landing', 'RecordsController@showLandingPageReport');
@@ -49,7 +51,14 @@ Route::get('mail/test', 'MailController@testEmail');
 Route::get('mail/run', 'MailController@thankCustomers');
 Route::get('mail/print', 'MailController@listThankedCustomers');
 Route::get('mail/form', 'MailController@listForms');
+
 Route::get('mail/business/dump', 'MailController@getBusinessEmails');
+
+Route::get('mail/denistest', 'MailController@sendAnEmail');
+Route::get('mail/b2bemail', 'MailController@sendb2bemail');
+Route::get('mail/denisquery', 'MailController@testquery');
+Route::get('mail/inputtest', 'MailController@inputtest');
+Route::post('mail/inputtest', 'MailController@inputtest');
 
 /* Send SMS Mail */
 Route::get('sms/send', 'MailController@sendSMSEmail');
@@ -58,6 +67,8 @@ Route::get('sms/send', 'MailController@sendSMSEmail');
 Route::get('supplier', 'InventoryController@supplierForm');
 Route::post('supplier', 'InventoryController@addSupplier');
 
+Route::get('b2b/add', 'AccountController@businessAccountForm');
+Route::post('b2b/add', 'AccountController@addBusinessAccount');
 
 
 /* Inventory Management */
@@ -151,6 +162,10 @@ Route::get('laptopbattery', 'ShitController@batterySeries');
 Route::get('laptopbattery2', 'ShitController@batteryModels');
 
 Route::get('close', 'ShitController@batchCloseWorkOrders');
+Route::get('sku', 'ShitController@getItemData');
+
+
 
 /* Customer Kiosk helpers */
 Route::post('customer/add', 'RecordsController@addCustomer');
+Route::post('customer/add/{location}', 'RecordsController@addCustomer');
